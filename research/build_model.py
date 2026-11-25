@@ -10,11 +10,13 @@ import concurrent.futures
 from datetime import datetime, timezone
 from io import StringIO
 import json
+import os
 from pathlib import Path
 import sys
 import numpy as np
 import pandas as pd
 import requests
+from provider_fallback import parse_fred_csv, fallback_dataset, previous_provenance, last_date
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW = ROOT / 'research' / 'raw'
@@ -52,20 +54,92 @@ def clean(x):
     return x
 
 
-def load_series(series_id, refresh):
-    path = RAW / f'{series_id}.csv'
-    if refresh or not path.exists():
+def load_dataset(refresh):
+    """Fetch all direct FRED series, or verify the official-source fallback.
+
+    Source files are written only after a complete, usable dataset exists.
+    Unsupported labels/tenors retain their dated cache rather than invented data.
+    """
+    checked_at = datetime.now(timezone.utc).isoformat()
+    original = previous_provenance(ROOT)
+    cached = {}
+    for series_id in SERIES:
+        path = RAW / f'{series_id}.csv'
+        if path.exists():
+            cached[series_id] = parse_fred_csv(path.read_text(), series_id)
+    if not refresh:
+        missing = set(SERIES) - cached.keys()
+        if missing:
+            raise ValueError(f'Missing offline source cache: {sorted(missing)}; run --refresh')
+        metadata = dict(mode='offline-cache', checkedAt=checked_at,
+            note='Offline rebuild from dated source caches. No observations or recession labels were refreshed or extended.',
+            perSeries={s: dict(mode='dated-cache', fetchedUrl=None, lastDate=last_date(cached[s]),
+                verifiedProviderLastDate=original.get(s, {}).get('verifiedProviderLastDate'),
+                refreshed=False, latestObservationFromCache=True,
+                cacheOriginalRetrievedAt=original.get(s, {}).get('sourceRetrievedAt'),
+                sourceRetrievedAt=original.get(s, {}).get('sourceRetrievedAt'), providerRetrievedAt=None) for s in SERIES})
+        return cached, metadata
+    api_key = os.environ.get('FRED_API_KEY', '').strip()
+    direct_transports = {}
+    def fetch_one(series_id):
+        if api_key:
+            try:
+                endpoint = 'https://api.stlouisfed.org/fred/series/observations'
+                response = requests.get(endpoint, params={'series_id':series_id, 'api_key':api_key, 'file_type':'json'}, timeout=8)
+                response.raise_for_status()
+                observations = pd.DataFrame(response.json()['observations'])
+                text = observations[['date','value']].rename(columns={'date':'observation_date','value':series_id}).to_csv(index=False)
+                values = parse_fred_csv(text, series_id)
+                direct_transports[series_id] = dict(mode='fred-api', fetchedUrl=endpoint+'?series_id='+series_id+'&file_type=json')
+                return series_id, values
+            except Exception:
+                # Credential values and keyed URLs never enter output or logs.
+                pass
         url = f'https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}'
-        response = requests.get(url, timeout=(10, 20), headers={'User-Agent': 'Horizon-Macro-Research/1.0'})
+        response = requests.get(url, timeout=8, headers={'User-Agent': 'Horizon-Macro-Research/1.0'})
         response.raise_for_status()
-        if not response.text.splitlines()[0].endswith(',' + series_id):
-            raise ValueError(f'{series_id}: unexpected FRED CSV format')
-        path.write_text(response.text)
-    frame = pd.read_csv(path, na_values=['.', ''], index_col=0, parse_dates=True)
-    out = pd.to_numeric(frame[series_id], errors='coerce').dropna()
-    if out.index.has_duplicates or not out.index.is_monotonic_increasing:
-        raise ValueError(f'{series_id}: invalid index')
-    return series_id, out
+        direct_transports[series_id] = dict(mode='fred-direct', fetchedUrl=url)
+        return series_id, parse_fred_csv(response.text, series_id)
+    successful, errors = {}, {}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
+        futures = {pool.submit(fetch_one, series_id): series_id for series_id in SERIES}
+        for future in concurrent.futures.as_completed(futures):
+            series_id = futures[future]
+            try:
+                key, values = future.result()
+                successful[key] = values
+            except Exception as error:
+                errors[series_id] = type(error).__name__
+    if errors:
+        raw, metadata = fallback_dataset(cached, original, direct_success=successful,
+            checked_at=checked_at, cache_dir=ROOT / 'research' / 'provider-cache')
+        metadata['directFredErrors'] = errors
+    else:
+        raw = successful
+        metadata = dict(mode='fred-direct', checkedAt=checked_at,
+            note='All source observations downloaded directly from FRED. Labels remain available only through the published USREC cutoff.',
+            perSeries={s: dict(mode='fred-direct', fetchedUrl=f'https://fred.stlouisfed.org/graph/fredgraph.csv?id={s}',
+                lastDate=last_date(raw[s]), verifiedProviderLastDate=last_date(raw[s]), refreshed=True,
+                latestObservationFromCache=False, cacheOriginalRetrievedAt=original.get(s, {}).get('sourceRetrievedAt'),
+                sourceRetrievedAt=checked_at, providerRetrievedAt=checked_at) for s in SERIES})
+    for series_id, transport in direct_transports.items():
+        if series_id in successful:
+            metadata['perSeries'][series_id].update(transport)
+    if not errors and api_key and all(t['mode']=='fred-api' for t in direct_transports.values()):
+        metadata['mode'] = 'fred-api'
+    missing = set(SERIES) - raw.keys()
+    if missing:
+        raise ValueError(f'No verified source or dated cache for: {sorted(missing)}')
+    for series_id in SERIES:
+        values = raw[series_id].rename(series_id)
+        path = RAW / f'{series_id}.csv'
+        temporary = path.with_suffix('.csv.tmp')
+        values.to_csv(temporary, index_label='observation_date', na_rep='')
+        temporary.replace(path)
+    cache_dir = ROOT / 'research' / 'provider-cache'
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    (cache_dir / 'provenance.json').write_text(json.dumps(metadata, indent=2))
+    return raw, metadata
 
 
 def sigmoid(x):
@@ -161,11 +235,13 @@ def main():
     asof_month = asof.to_period('M').to_timestamp()
     refresh = args.refresh and not args.offline
     RAW.mkdir(parents=True, exist_ok=True)
-    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
-        raw = dict(pool.map(lambda s: load_series(s, refresh), SERIES))
+    raw, data_refresh = load_dataset(refresh)
     # Include only observations at or before the requested date. NFCI's partial
     # current month is never used as a monthly model feature or comparison point.
     raw = {s: v.loc[v.index <= asof] for s, v in raw.items()}
+    data_refresh['labelCutoff'] = last_date(raw['USREC'])
+    data_refresh['cachedSeries'] = [s for s, info in data_refresh['perSeries'].items() if not info['refreshed']]
+    data_refresh['lastAvailableObservation'] = {s: last_date(v) for s, v in raw.items()}
     monthly = {}
     for s, v in raw.items():
         if s == 'NFCICREDIT':
@@ -265,17 +341,28 @@ def main():
                      model=metrics(sensitivity_frame.target,sensitivity_frame.probability),
                      note='Train issue <= refit minus 25 months; target end at least 12 months before refit. Latest-vintage inputs still revised.')
     yield_curve=[]
+    curve_series = ['TB3MS', 'GS1', 'GS2', 'GS5', 'GS10', 'GS30']
+    common_curve = source.loc[source[curve_series].notna().all(axis=1), curve_series]
+    if common_curve.empty:
+        raise ValueError('No common observation date for all six Treasury tenors')
+    curve_date = common_curve.index[-1]
     for tenor, years, s in [('3M',.25,'TB3MS'),('1Y',1,'GS1'),('2Y',2,'GS2'),('5Y',5,'GS5'),('10Y',10,'GS10'),('30Y',30,'GS30')]:
-        values=source[s].dropna()
-        yield_curve.append(dict(tenor=tenor,years=years,value=values.iloc[-1],previousValue=values.iloc[-2],date=iso(values.index[-1]),series=s,
+        previous_date = curve_date-pd.DateOffset(months=1)
+        previous_value = source[s].get(previous_date, np.nan)
+        yield_curve.append(dict(tenor=tenor,years=years,value=source.loc[curve_date,s],previousValue=previous_value,date=iso(curve_date),series=s,
                                 quoteBasis='discount' if s=='TB3MS' else 'investment'))
+    data_refresh['curveDate'] = iso(curve_date)
     sources=[]
     for s,(label,freq,unit,provider) in SERIES.items():
-        v=raw[s]
+        v=raw[s].dropna()
+        provenance=data_refresh['perSeries'][s]
         sources.append(dict(id=s,label=label,url=f'https://fred.stlouisfed.org/series/{s}',downloadUrl=f'https://fred.stlouisfed.org/graph/fredgraph.csv?id={s}',
                             frequency=freq,unit=unit,provider=provider,lastDate=iso(v.index[-1]),lastValue=v.iloc[-1],
-                            retrievedAt=datetime.now(timezone.utc).isoformat()))
-    snapshot=dict(meta=dict(name='HORIZON',version='1.0',generatedAt=datetime.now(timezone.utc).isoformat(),asOf=args.as_of,
+                            retrievedAt=provenance.get('sourceRetrievedAt'), transportStatus=provenance['mode'],
+                            fetchedUrl=provenance.get('fetchedUrl'), providerRetrievedAt=provenance.get('providerRetrievedAt'),
+                            verifiedProviderLastDate=provenance.get('verifiedProviderLastDate'),
+                            latestObservationFromCache=provenance.get('latestObservationFromCache',False)))
+    snapshot=dict(meta=dict(name='HORIZON',version='1.0',dataRefresh=data_refresh,generatedAt=datetime.now(timezone.utc).isoformat(),asOf=args.as_of,
                             issueDate=iso(issue),featureDate=iso(feature_date), forecastStart=latest['forecastStart'],forecastEnd=latest['forecastEnd'],
                             methodology='L2 logistic; 2-month feature lag; future 12-month any-recession target; annual expanding walk-forward with 12-month target purge; latest-vintage historical simulation.'),
                   latest=latest,model=final_model,history=history,metrics=evaluation,calibration=calibration,

@@ -2,7 +2,7 @@ export type FeatureKey = 'slope'|'credit'|'labor';
 export type HistoryRow = {date:string;probability:number;baseline:number;curveProbability:number|null;target:number|null;recession:number;slope:number;credit:number;labor:number;featureDate:string};
 export type ModelMetrics = {auc:number;brier:number;logLoss:number};
 export type Snapshot = {
- meta:{generatedAt:string;issueDate:string;featureDate:string;forecastStart:string;forecastEnd:string;refresh?:{status:string;source?:string;sourceUpdatedAt?:string;checkedAt:string;inputMonthsBehind:number;note:string};[key:string]:unknown};
+ meta:{generatedAt:string;issueDate:string;featureDate:string;forecastStart:string;forecastEnd:string;dataRefresh?:{mode:string;note?:string;checkedAt?:string;perSeries?:Record<string,unknown>};refresh?:{status:string;source?:string;sourceUpdatedAt?:string;checkedAt:string;inputMonthsBehind:number;note:string};[key:string]:unknown};
  latest:{probability:number;previousProbability:number;change:number;regime:string;features:Record<FeatureKey,number>;featureDate:string;issueDate:string;baselineProbability:number;indicatorDate:string;indicators:{gs10:number;tb3ms:number;unemployment:number;inflation:number;inflationDate:string;fedFunds:number};contributions:{key:FeatureKey;label:string;value:number;standardized:number;coefficient:number;logOdds:number}[]};
  model:{featureOrder:FeatureKey[];means:number[];scales:number[];coefficients:number[];intercept:number;rawCoefficients:number[];rawIntercept:number;trainedThrough:string;trainingN:number};
  history:HistoryRow[];metrics:{start:string;end:string;n:number;events:number;positiveHorizons:number;recessionMonths:number;model:ModelMetrics;baseRate:ModelMetrics;curveOnly:ModelMetrics;exploratoryBlend?:ModelMetrics};

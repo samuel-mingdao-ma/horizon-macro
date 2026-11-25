@@ -1,6 +1,6 @@
 # HORIZON 提交与展示指南
 
-这是一个完整的量化研究作品：把“美国未来一年会不会衰退”变成定义清楚、可复现、可以检验的预测问题，再把数据、模型、历史失误和交互分析放到同一个网站中。提交时以实际验证过的部署链接为准；本指南不把尚未完成的发布写成已完成。
+这是一个完整的量化研究作品：把“美国未来一年会不会衰退”变成定义清楚、可复现、可以检验的预测问题，再把数据、模型、历史失误和交互分析放到同一个网站中。公开网站：[HORIZON](https://horizon-macro-observatory.samel23.chatgpt.site)；源码：[GitHub](https://github.com/samuel-mingdao-ma/horizon-macro)。
 
 ## 最终应该提交什么
 
@@ -9,7 +9,7 @@
 3. **简短项目说明**：研究问题、数据、方法、历史表现、经济观点和局限各一段即可。
 4. **运行证据**：保留网站数据日期、成功测试输出和实际成功的数据刷新记录。
 
-公开源码仓库：[samuel-mingdao-ma/horizon-macro](https://github.com/samuel-mingdao-ma/horizon-macro)。GitHub Actions 每个工作日 18:30 UTC 获取 FRED 数据、重新训练、检验并保存研究文件；线上 API 每小时检查通过验证的研究快照，因此数据与模型更新不依赖重新部署网站。GitHub 不可用时，会尝试直接拉取 FRED，仍不可用则明确保留原日期的快照。查看 Actions 的实际成功记录，不能仅凭配置文件声称定时任务运行过。
+公开源码仓库：[samuel-mingdao-ma/horizon-macro](https://github.com/samuel-mingdao-ma/horizon-macro)。GitHub Actions 每个工作日 18:30 UTC 获取 FRED 数据、重新训练、检验并保存研究文件；线上 API 每小时检查通过验证的研究快照，因此数据与模型更新不依赖重新部署网站。GitHub 不可用时，会尝试直接拉取 FRED，仍不可用则明确保留原日期的快照。查看 Actions 的实际成功记录，不能仅凭配置文件声称定时任务运行过。云端无法直连 FRED 下载地址时，流水线使用联储官方 FRED-MD 与芝加哥联储直供数据；没有新数据来源的 USREC 衰退标签与可选期限保留缓存原日期。新标签缺失时不会补零，历史评估截止日也不会被虚假延长。
 
 ## 项目的核心论点
 

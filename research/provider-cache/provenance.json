@@ -1,0 +1,145 @@
+{
+  "mode": "official-provider-fallback",
+  "checkedAt": "2026-11-25T20:15:04.112038+00:00",
+  "note": "Direct FRED access was incomplete. Identical level series are verified from the official FRED-MD release and Chicago Fed credit CSV. Later cached observations are retained; unsupported series (including USREC labels and optional tenors) keep their original dates. No labels or missing observations are inferred.",
+  "perSeries": {
+    "NFCICREDIT": {
+      "mode": "official-provider",
+      "fetchedUrl": "https://api.data.chicagofed.org/NFCI/nfci-data-series-csv.csv",
+      "lastDate": "2026-11-20",
+      "verifiedProviderLastDate": "2026-11-20",
+      "refreshed": true,
+      "latestObservationFromCache": false,
+      "cacheOriginalRetrievedAt": "2026-11-25T19:56:59.740774+00:00",
+      "sourceRetrievedAt": "2026-11-25T20:15:04.112038+00:00",
+      "providerRetrievedAt": "2026-11-25T20:15:04.112038+00:00"
+    },
+    "GS30": {
+      "mode": "dated-cache",
+      "fetchedUrl": null,
+      "lastDate": "2026-10-01",
+      "verifiedProviderLastDate": null,
+      "refreshed": false,
+      "latestObservationFromCache": true,
+      "cacheOriginalRetrievedAt": "2026-11-25T19:56:59.740845+00:00",
+      "sourceRetrievedAt": "2026-11-25T19:56:59.740845+00:00",
+      "providerRetrievedAt": null
+    },
+    "FEDFUNDS": {
+      "mode": "official-provider",
+      "fetchedUrl": "https://www.stlouisfed.org/-/media/project/frbstl/stlouisfed/research/fred-md/monthly/2026-10-md.csv",
+      "lastDate": "2026-10-01",
+      "verifiedProviderLastDate": "2026-09-01",
+      "refreshed": true,
+      "latestObservationFromCache": true,
+      "cacheOriginalRetrievedAt": "2026-11-25T19:56:59.740809+00:00",
+      "sourceRetrievedAt": "2026-11-25T19:56:59.740809+00:00",
+      "providerRetrievedAt": "2026-11-25T20:15:04.112038+00:00"
+    },
+    "CPIAUCSL": {
+      "mode": "official-provider",
+      "fetchedUrl": "https://www.stlouisfed.org/-/media/project/frbstl/stlouisfed/research/fred-md/monthly/2026-10-md.csv",
+      "lastDate": "2026-10-01",
+      "verifiedProviderLastDate": "2026-09-01",
+      "refreshed": true,
+      "latestObservationFromCache": true,
+      "cacheOriginalRetrievedAt": "2026-11-25T19:56:59.740801+00:00",
+      "sourceRetrievedAt": "2026-11-25T19:56:59.740801+00:00",
+      "providerRetrievedAt": "2026-11-25T20:15:04.112038+00:00"
+    },
+    "GS10": {
+      "mode": "official-provider",
+      "fetchedUrl": "https://www.stlouisfed.org/-/media/project/frbstl/stlouisfed/research/fred-md/monthly/2026-10-md.csv",
+      "lastDate": "2026-10-01",
+      "verifiedProviderLastDate": "2026-09-01",
+      "refreshed": true,
+      "latestObservationFromCache": true,
+      "cacheOriginalRetrievedAt": "2026-11-25T19:56:59.740746+00:00",
+      "sourceRetrievedAt": "2026-11-25T19:56:59.740746+00:00",
+      "providerRetrievedAt": "2026-11-25T20:15:04.112038+00:00"
+    },
+    "GS1": {
+      "mode": "official-provider",
+      "fetchedUrl": "https://www.stlouisfed.org/-/media/project/frbstl/stlouisfed/research/fred-md/monthly/2026-10-md.csv",
+      "lastDate": "2026-10-01",
+      "verifiedProviderLastDate": "2026-09-01",
+      "refreshed": true,
+      "latestObservationFromCache": true,
+      "cacheOriginalRetrievedAt": "2026-11-25T19:56:59.740819+00:00",
+      "sourceRetrievedAt": "2026-11-25T19:56:59.740819+00:00",
+      "providerRetrievedAt": "2026-11-25T20:15:04.112038+00:00"
+    },
+    "GS2": {
+      "mode": "dated-cache",
+      "fetchedUrl": null,
+      "lastDate": "2026-10-01",
+      "verifiedProviderLastDate": null,
+      "refreshed": false,
+      "latestObservationFromCache": true,
+      "cacheOriginalRetrievedAt": "2026-11-25T19:56:59.740828+00:00",
+      "sourceRetrievedAt": "2026-11-25T19:56:59.740828+00:00",
+      "providerRetrievedAt": null
+    },
+    "USREC": {
+      "mode": "dated-cache",
+      "fetchedUrl": null,
+      "lastDate": "2026-10-01",
+      "verifiedProviderLastDate": null,
+      "refreshed": false,
+      "latestObservationFromCache": true,
+      "cacheOriginalRetrievedAt": "2026-11-25T19:56:59.740792+00:00",
+      "sourceRetrievedAt": "2026-11-25T19:56:59.740792+00:00",
+      "providerRetrievedAt": null
+    },
+    "GS5": {
+      "mode": "official-provider",
+      "fetchedUrl": "https://www.stlouisfed.org/-/media/project/frbstl/stlouisfed/research/fred-md/monthly/2026-10-md.csv",
+      "lastDate": "2026-10-01",
+      "verifiedProviderLastDate": "2026-09-01",
+      "refreshed": true,
+      "latestObservationFromCache": true,
+      "cacheOriginalRetrievedAt": "2026-11-25T19:56:59.740837+00:00",
+      "sourceRetrievedAt": "2026-11-25T19:56:59.740837+00:00",
+      "providerRetrievedAt": "2026-11-25T20:15:04.112038+00:00"
+    },
+    "UNRATE": {
+      "mode": "official-provider",
+      "fetchedUrl": "https://www.stlouisfed.org/-/media/project/frbstl/stlouisfed/research/fred-md/monthly/2026-10-md.csv",
+      "lastDate": "2026-10-01",
+      "verifiedProviderLastDate": "2026-09-01",
+      "refreshed": true,
+      "latestObservationFromCache": true,
+      "cacheOriginalRetrievedAt": "2026-11-25T19:56:59.740783+00:00",
+      "sourceRetrievedAt": "2026-11-25T19:56:59.740783+00:00",
+      "providerRetrievedAt": "2026-11-25T20:15:04.112038+00:00"
+    },
+    "TB3MS": {
+      "mode": "official-provider",
+      "fetchedUrl": "https://www.stlouisfed.org/-/media/project/frbstl/stlouisfed/research/fred-md/monthly/2026-10-md.csv",
+      "lastDate": "2026-10-01",
+      "verifiedProviderLastDate": "2026-09-01",
+      "refreshed": true,
+      "latestObservationFromCache": true,
+      "cacheOriginalRetrievedAt": "2026-11-25T19:56:59.740764+00:00",
+      "sourceRetrievedAt": "2026-11-25T19:56:59.740764+00:00",
+      "providerRetrievedAt": "2026-11-25T20:15:04.112038+00:00"
+    }
+  },
+  "providerUrls": [
+    "https://www.stlouisfed.org/research/economists/mccracken/fred-databases",
+    "https://api.data.chicagofed.org/NFCI/nfci-data-series-csv.csv"
+  ],
+  "directFredErrors": {
+    "GS10": "Timeout",
+    "USREC": "Timeout",
+    "GS1": "Timeout",
+    "NFCICREDIT": "Timeout",
+    "FEDFUNDS": "Timeout",
+    "GS5": "Timeout",
+    "TB3MS": "Timeout",
+    "CPIAUCSL": "Timeout",
+    "UNRATE": "Timeout",
+    "GS2": "Timeout",
+    "GS30": "Timeout"
+  }
+}

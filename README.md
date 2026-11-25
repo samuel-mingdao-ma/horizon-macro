@@ -1,8 +1,10 @@
 # HORIZON · U.S. Macro Risk Observatory
 
+[Live website](https://horizon-macro-observatory.samel23.chatgpt.site) · [Public source](https://github.com/samuel-mingdao-ma/horizon-macro) · [Refresh history](https://github.com/samuel-mingdao-ma/horizon-macro/actions/workflows/refresh-research.yml)
+
 An updating quantitative research website that asks: **What do the Treasury curve, credit conditions and labor momentum imply about the chance of at least one U.S. recession month in the next twelve months?**
 
-HORIZON combines public Federal Reserve data, an interpretable logistic model, chronological validation, scenario analysis and transparent research downloads. It is a student research project, not an official Federal Reserve forecast. Its public source and refresh history are available on GitHub; the final deployed website URL is supplied with the handoff.
+HORIZON combines public Federal Reserve data, an interpretable logistic model, chronological validation, scenario analysis and transparent research downloads. It is a student research project, not an official Federal Reserve forecast. The website is publicly accessible; its source and refresh history are available on GitHub.
 
 ## What the project demonstrates
 
@@ -79,6 +81,8 @@ The public portfolio repository is [samuel-mingdao-ma/horizon-macro](https://git
 | GitHub Actions research refresh | Fetches full FRED history, refits the model, recomputes chronological validation, runs Python/JavaScript checks, and commits the verified artifacts at **18:30 UTC each weekday**. Manual workflow runs are supported. |
 | Production `/api/macro` | Checks the repository's published research snapshot with a one-hour cache. It validates dates, model parameters, and scoring before serving it. Updated data and model coefficients therefore reach the hosted website without a source redeploy. If GitHub is unavailable, it tries direct FRED scoring, then retains a clearly dated fallback. |
 
+When cloud access to the FRED graph download is unavailable, the pipeline verifies the same core level series using the official [FRED-MD release](https://www.stlouisfed.org/research/economists/mccracken/fred-databases) and [Chicago Fed credit CSV](https://api.data.chicagofed.org/NFCI/nfci-data-series-csv.csv). It preserves later cached observations, retains dated USREC/unsupported-tenor caches, and never invents new recession labels. Evaluation can therefore remain at its last known label cutoff while current signals advance. `meta.dataRefresh.perSeries` records retrieval and cache provenance; original fallback responses are retained in `research/provider-cache/`.
+
 The browser checks on load, when returning to the tab, and every six hours. Source checks are not market ticks. GitHub schedules may be delayed or disabled; the last research-build timestamp and observation months remain the freshness evidence. Visit the repository's **Actions → Refresh HORIZON research** to inspect actual successful runs. No API key or hosting secret is required.
 
 When forking this project, change `RESEARCH_SNAPSHOT_URL` in `lib/live-data.ts` to your repository's raw snapshot URL, enable Actions with `contents: write`, and manually run the workflow once. Keep the Sites source remote and the GitHub portfolio remote separate. CSV downloads also follow the verified research snapshot; the ZIP source export is the website release source, while GitHub is the newest source.
@@ -108,7 +112,8 @@ app/api/download/route.ts    JSON/CSV download endpoints
 lib/live-data.ts             FRED parsing, alignment, scoring and fallback
 research/build_model.py     full-history estimation and validation
 research/test_model.py      quantitative invariants
-research/raw/               retained, unmodified provider CSV observations
+research/raw/               cached series used for reproducible research
+research/provider-cache/    original official fallback files and provenance
 research/folds.json         historical train/refit boundary audit
 data/snapshot.json          canonical bundled research snapshot
 public/data/                browser fallback and downloadable CSV files
