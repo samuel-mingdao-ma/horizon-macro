@@ -11,6 +11,12 @@
 
 公开源码仓库：[samuel-mingdao-ma/horizon-macro](https://github.com/samuel-mingdao-ma/horizon-macro)。GitHub Actions 每个工作日 18:30 UTC 获取 FRED 数据、重新训练、检验并保存研究文件；线上 API 每小时检查通过验证的研究快照，因此数据与模型更新不依赖重新部署网站。GitHub 不可用时，会尝试直接拉取 FRED，仍不可用则明确保留原日期的快照。查看 Actions 的实际成功记录，不能仅凭配置文件声称定时任务运行过。云端无法直连 FRED 下载地址时，流水线使用联储官方 FRED-MD 与芝加哥联储直供数据；没有新数据来源的 USREC 衰退标签与可选期限保留缓存原日期。新标签缺失时不会补零，历史评估截止日也不会被虚假延长。
 
+## 云端刷新授权
+
+云端运行实测中，FRED 免费下载页面及 FRED-MD 连接超时；程序已支持通过 FRED 官方 API 获取同一批数据。若云端刷新仍失败，在 [FRED 官方页面](https://fred.stlouisfed.org/docs/api/api_key.html) 申请自己的免费 API key，再到仓库 **Settings → Secrets and variables → Actions → New repository secret**，名称填写 `FRED_API_KEY`。密钥只粘贴到 GitHub Secret，不能写进源码或聊天。
+
+配置后在 Actions 手动运行一次，直到整条任务成功、数据更新写回仓库，才可以把“云端自动更新已实测通过”写进提交材料。页面和下载已上线，并不等于外部数据源授权已完成。
+
 ## 项目的核心论点
 
 可以这样介绍：

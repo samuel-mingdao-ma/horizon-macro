@@ -6,7 +6,11 @@ The headline is an experimental model estimate. Historical probability calibrati
 
 ## Data and attribution
 
-All raw series are downloaded directly from the Federal Reserve Bank of St. Louis's FRED chart CSV endpoint. The raw files are retained in `research/raw/`; each source URL, observation date, retrieval timestamp and provider is included in `data/snapshot.json`. FRED's CSV download endpoint requires no API key; it is distinct from the documented authenticated FRED API and may change. The pipeline validates the CSV header and fails on download errors rather than silently replacing observations.
+The pipeline first requests original series from FRED's chart CSV endpoint (or its official API when an optional `FRED_API_KEY` is configured). Cloud downloads can time out. In that case, it verifies identical level series using the official FRED-MD monthly release and the Chicago Fed's current credit CSV. FRED-MD transformation codes are not applied. Required alternative-provider access must succeed; an unavailable feed fails the build rather than fabricating observations.
+
+`research/raw/` holds normalized cached series used by the model. Original alternative-provider responses and retrieval provenance are retained in `research/provider-cache/`. Series unsupported by the alternative feeds, including USREC and optional Treasury tenors, retain their dated cache. Missing future recession labels remain unknown: feature months can advance without extending the evaluation cutoff. The full Treasury curve uses the latest month shared by every displayed tenor.
+
+`meta.dataRefresh` and source-level fields identify provider URLs, actual retrieval timestamps, verified provider cutoff, retained later cached observations, label cutoff, and common curve month. A new research-build timestamp does not imply every series received a new observation.
 
 - **GS10**: Board of Governors of the Federal Reserve System, monthly 10-year constant maturity Treasury yield, investment basis. [Source](https://fred.stlouisfed.org/series/GS10)
 - **TB3MS**: Board of Governors of the Federal Reserve System, monthly 3-month Treasury bill secondary market rate, discount basis. [Source](https://fred.stlouisfed.org/series/TB3MS)

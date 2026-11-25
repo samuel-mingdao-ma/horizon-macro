@@ -83,9 +83,20 @@ The public portfolio repository is [samuel-mingdao-ma/horizon-macro](https://git
 
 When cloud access to the FRED graph download is unavailable, the pipeline verifies the same core level series using the official [FRED-MD release](https://www.stlouisfed.org/research/economists/mccracken/fred-databases) and [Chicago Fed credit CSV](https://api.data.chicagofed.org/NFCI/nfci-data-series-csv.csv). It preserves later cached observations, retains dated USREC/unsupported-tenor caches, and never invents new recession labels. Evaluation can therefore remain at its last known label cutoff while current signals advance. `meta.dataRefresh.perSeries` records retrieval and cache provenance; original fallback responses are retained in `research/provider-cache/`.
 
-The browser checks on load, when returning to the tab, and every six hours. Source checks are not market ticks. GitHub schedules may be delayed or disabled; the last research-build timestamp and observation months remain the freshness evidence. Visit the repository's **Actions → Refresh HORIZON research** to inspect actual successful runs. No API key or hosting secret is required.
+The browser checks on load, when returning to the tab, and every six hours. Source checks are not market ticks. GitHub schedules may be delayed or disabled; the last research-build timestamp and observation months remain the freshness evidence. Visit the repository's **Actions → Refresh HORIZON research** to inspect actual successful runs. No API key or hosting secret is required for the official fallback. An optional repository secret `FRED_API_KEY` enables the documented FRED API transport and can refresh series unavailable through alternative feeds. Never commit a key to source.
 
 When forking this project, change `RESEARCH_SNAPSHOT_URL` in `lib/live-data.ts` to your repository's raw snapshot URL, enable Actions with `contents: write`, and manually run the workflow once. Keep the Sites source remote and the GitHub portfolio remote separate. CSV downloads also follow the verified research snapshot; the ZIP source export is the website release source, while GitHub is the newest source.
+
+## Cloud source access
+
+The website is public and its API/download routes are verified. Cloud runners can time out when accessing FRED graph downloads and the FRED-MD website. The full-refresh workflow therefore also supports the documented FRED API via the repository secret `FRED_API_KEY`.
+
+1. Request your own key through the [official FRED API key page](https://fred.stlouisfed.org/docs/api/api_key.html).
+2. In [GitHub Actions secrets](https://github.com/samuel-mingdao-ma/horizon-macro/settings/secrets/actions), create `FRED_API_KEY`. Enter the key there, never in source or a chat message.
+3. Run [Refresh HORIZON research](https://github.com/samuel-mingdao-ma/horizon-macro/actions/workflows/refresh-research.yml) and confirm a successful complete run and resulting research commit.
+4. The hosted site will read the resulting public research snapshot on its next hourly check; no hosting redeploy is required.
+
+A configured schedule is not proof of a successful refresh. Until a successful cloud run is recorded, the published data remains a dated research build; use the actual observation dates and refresh history as evidence.
 
 ## Methods and important limits
 
