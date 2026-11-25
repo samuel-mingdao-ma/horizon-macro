@@ -89,6 +89,8 @@ When forking this project, change `RESEARCH_SNAPSHOT_URL` in `lib/live-data.ts` 
 
 ## Cloud source access
 
+**Verified 25 November 2026:** [cloud refresh 45710561484](https://github.com/samuel-mingdao-ma/horizon-macro/actions/runs/45710561484) completed successfully, fetched all eleven series through the official FRED API, passed all 29 checks, and committed the refreshed research. The key is stored in the repository Actions secret; it is absent from public source and artifacts.
+
 The website is public and its API/download routes are verified. Cloud runners can time out when accessing FRED graph downloads and the FRED-MD website. The full-refresh workflow therefore also supports the documented FRED API via the repository secret `FRED_API_KEY`.
 
 1. Request your own key through the [official FRED API key page](https://fred.stlouisfed.org/docs/api/api_key.html).
@@ -96,7 +98,7 @@ The website is public and its API/download routes are verified. Cloud runners ca
 3. Run [Refresh HORIZON research](https://github.com/samuel-mingdao-ma/horizon-macro/actions/workflows/refresh-research.yml) and confirm a successful complete run and resulting research commit.
 4. The hosted site will read the resulting public research snapshot on its next hourly check; no hosting redeploy is required.
 
-A configured schedule is not proof of a successful refresh. Until a successful cloud run is recorded, the published data remains a dated research build; use the actual observation dates and refresh history as evidence.
+A configured schedule alone is not proof of a successful refresh. The linked run is the verified example; continue using actual observation dates and successful-run history as the freshness evidence.
 
 ## Methods and important limits
 

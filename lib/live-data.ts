@@ -4,6 +4,12 @@ export type MacroSnapshot = Record<string, any>;
 const IDS = ['GS10', 'TB3MS', 'NFCICREDIT', 'UNRATE', 'CPIAUCSL', 'FEDFUNDS', 'GS1', 'GS2', 'GS5', 'GS30'];
 const TTL = 60 * 60 * 1000;
 export const RESEARCH_SNAPSHOT_URL = 'https://raw.githubusercontent.com/samuel-mingdao-ma/horizon-macro/main/public/data/snapshot.json';
+/** Bypass named-branch CDN entries when the hourly application cache expires. */
+export function uncachedResearchUrl(canonicalUrl: string, checkedAt = Date.now()): string {
+  const url = new URL(canonicalUrl);
+  url.searchParams.set('_horizon_refresh', String(checkedAt));
+  return url.toString();
+}
 let cached: { at: number; value: MacroSnapshot } | undefined;
 let inFlight: Promise<MacroSnapshot> | undefined;
 
@@ -175,7 +181,7 @@ export function validateResearchSnapshot(candidate: unknown, base: MacroSnapshot
 }
 
 export async function refreshResearchSnapshot(base: MacroSnapshot, now = new Date(), loader: typeof fetch = fetch): Promise<MacroSnapshot> {
-  const response = await loader(RESEARCH_SNAPSHOT_URL, { signal: AbortSignal.timeout(5_000), headers: { Accept: 'application/json' }, cache: 'no-store' });
+  const response = await loader(uncachedResearchUrl(RESEARCH_SNAPSHOT_URL, now.getTime()), { signal: AbortSignal.timeout(5_000), headers: { Accept: 'application/json' }, cache: 'no-store' });
   if (!response.ok) throw new Error(`Research snapshot request failed (${response.status})`);
   const value = structuredClone(validateResearchSnapshot(await response.json(), base, now));
   const checkedAt = now.toISOString();

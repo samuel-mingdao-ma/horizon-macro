@@ -90,3 +90,26 @@ test('remote builds cannot regress the research vintage or issue future forecast
   assert.throws(() => validateResearchSnapshot(badModel, snapshot, now), /parameters/);
   assert.throws(() => validateResearchSnapshot({ meta: { version: '99' } }, snapshot, now), /version/);
 });
+
+
+test('research fetches bypass stale branch CDN entries while keeping canonical provenance', async () => {
+  const { refreshResearchSnapshot, RESEARCH_SNAPSHOT_URL } = await import('../lib/live-data.ts');
+  const checkedAt = new Date(snapshot.meta.generatedAt);
+  const requests = [];
+  const loader = async (input, options) => {
+    requests.push({ url: new URL(String(input)), options });
+    return Response.json(snapshot);
+  };
+  const first = await refreshResearchSnapshot(snapshot, checkedAt, loader);
+  await refreshResearchSnapshot(snapshot, new Date(checkedAt.getTime() + 1000), loader);
+  const canonical = new URL(RESEARCH_SNAPSHOT_URL);
+  for (const { url, options } of requests) {
+    assert.equal(url.origin + url.pathname, canonical.origin + canonical.pathname);
+    assert.deepEqual([...url.searchParams.keys()], ['_horizon_refresh']);
+    assert.match(url.searchParams.get('_horizon_refresh'), /^\d+$/);
+    assert.equal(options.cache, 'no-store');
+  }
+  assert.equal(requests[0].url.searchParams.get('_horizon_refresh'), String(checkedAt.getTime()));
+  assert.notEqual(requests[0].url.href, requests[1].url.href);
+  assert.equal(first.meta.refresh.sourceUrl, RESEARCH_SNAPSHOT_URL);
+});

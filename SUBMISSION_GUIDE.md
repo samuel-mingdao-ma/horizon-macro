@@ -13,6 +13,8 @@
 
 ## 云端刷新授权
 
+**已完成并实测通过：** 2026 年 11 月 25 日，[云端刷新任务 45710561484](https://github.com/samuel-mingdao-ma/horizon-macro/actions/runs/45710561484) 成功通过官方 FRED API 更新全部 11 个数据系列，29 项检查通过，并将新研究结果写回仓库。密钥已保存在 GitHub Actions Secret，未写入公开源码或数据文件。下面的配置说明供以后更换密钥或复制项目使用。
+
 云端运行实测中，FRED 免费下载页面及 FRED-MD 连接超时；程序已支持通过 FRED 官方 API 获取同一批数据。若云端刷新仍失败，在 [FRED 官方页面](https://fred.stlouisfed.org/docs/api/api_key.html) 申请自己的免费 API key，再到仓库 **Settings → Secrets and variables → Actions → New repository secret**，名称填写 `FRED_API_KEY`。密钥只粘贴到 GitHub Secret，不能写进源码或聊天。
 
 配置后在 Actions 手动运行一次，直到整条任务成功、数据更新写回仓库，才可以把“云端自动更新已实测通过”写进提交材料。页面和下载已上线，并不等于外部数据源授权已完成。
