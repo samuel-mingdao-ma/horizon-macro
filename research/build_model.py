@@ -56,7 +56,7 @@ def load_series(series_id, refresh):
     path = RAW / f'{series_id}.csv'
     if refresh or not path.exists():
         url = f'https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}'
-        response = requests.get(url, timeout=60, headers={'User-Agent': 'Horizon-Macro-Research/1.0'})
+        response = requests.get(url, timeout=(10, 20), headers={'User-Agent': 'Mozilla/5.0 (compatible; HORIZON research dashboard)', 'Accept': 'text/csv,*/*;q=0.8', 'Referer': f'https://fred.stlouisfed.org/series/{series_id}'})
         response.raise_for_status()
         if not response.text.splitlines()[0].endswith(',' + series_id):
             raise ValueError(f'{series_id}: unexpected FRED CSV format')
