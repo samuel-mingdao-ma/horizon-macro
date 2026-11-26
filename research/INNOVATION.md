@@ -41,6 +41,16 @@ Negative credit values retain their sign. The interaction coefficient is estimat
 
 ## What the historical comparison actually shows
 
+### Learning a blend weight from completed forecast windows
+
+For each January, take the original annual-replay probability `p`, its expanding base rate `b` and the binary twelve-month outcome `y` for each eligible earlier issue. Fit `w` to minimize the sum of squared errors for `q = b + w × (p − b)`. The solution is `sum((p − b) × (y − b)) / sum((p − b)²)` clipped to [0, 1]. Identical model and base predictions leave the weight unidentified, in which case the code uses the base rate. Each weight applies to its entire evaluation year within that research vintage.
+
+An issue qualifies for training only when its twelve-month window ends strictly before the January fit and all three values are present. January 1996 was the first fit with 60 eligible months. The January 2026 fit used 420 issues through December 2024 and assigned 46.97% to the original model. Applying that weight to the November 2026 production estimate and base rate gives 22.13%. This illustration uses the current model inputs. Historical evaluation uses the original annual replay. The frozen prospective ledger continues to track its registered fixed 50/50 comparator.
+
+The four methods share a 358-month evaluation sample. Brier scores are 0.19237 (original), 0.17091 (annually fitted), 0.15578 (expanding base) and 0.14855 (fixed 50/50). In 2023 the annual rule still placed 75.26% weight on the original. Across twelve forecast windows that all ultimately contained no recession, the original averaged 91.13%, and the fitted blend averaged 74.71%. Both proposed blends are exploratory. Calendar eligibility removes overlapping training targets from the test boundary. Input revisions and the lag between a turning point and its announcement still limit real-time interpretation. [NBER announcement dates and dating procedure](https://www.nber.org/research/business-cycle-dating/business-cycle-dating-procedure-frequently-asked-questions)
+
+### Original model and interaction candidate over the full historical replay
+
 Same 430 mature monthly issues, January 1990–October 2025; 75 positive forward windows, four independent downturns. Lower Brier and log loss are better; higher AUC is better.
 
 | Comparator | AUC | Brier | Log loss |

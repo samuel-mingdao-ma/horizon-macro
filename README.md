@@ -78,6 +78,12 @@ On the same 430 historical months, the interaction candidate's AUC is **0.7848**
 
 All new hypotheses were developed after viewing the historical failures. Their chronological replay is **post-hoc exploration, not an untouched test**. Hash linking checks internal consistency; it does not provide independent timestamping, blockchain security, or tamper-proof certification. Read [the experiment, complete comparison, and prospective protocol](research/INNOVATION.md).
 
+## What does a 21% forecast mean in practice?
+
+The November 2026 original estimate is 21.1% for December 2026 through November 2027. In the comparable historical replay, 48 original estimates fell in its 20–40% band. Their mean forecast was 27.4%, and 4 of the 48 forward windows contained a recession (8.3%). The windows overlap and the band spans a range of economic conditions. Its observed rate provides historical context for the current estimate. [Inspect the probability bands](https://horizon-macro-observatory.samel23.chatgpt.site/#calibration)
+
+Each January, the experiment estimates how much weight to give the original model relative to its expanding base rate. Weights use only earlier forecast issues whose twelve-month outcome windows ended before that January, with at least 60 usable observations. On the same 358 mature issues from January 1996 through October 2025, mean squared probability error (Brier score) was 0.19237 for the original, 0.17091 for the fitted blend, 0.15578 for the base rate and 0.14855 for the existing fixed 50/50 blend. The fitted weight improves on the original while both simpler alternatives score better. The protocol was explored after historical errors were visible. [Download all 358 forecasts and their training cutoffs](https://horizon-macro-observatory.samel23.chatgpt.site/api/download?file=probability)
+
 ## How long does a false warning last?
 
 In the November 2026 replay, the original model signaled every month from September 2022 through February 2026 at a 30% threshold. Of those 42 forecasts, the first 38 had completed twelve-month windows with no recession. The last four outcomes were pending. The longest confirmed false-warning streak was therefore **at least 38 months**. This one stretch accounts for 38 of the original model’s 107 mature false-warning months. [Explore the original model’s alarm history](https://horizon-macro-observatory.samel23.chatgpt.site/#history?rule=original&threshold=30)

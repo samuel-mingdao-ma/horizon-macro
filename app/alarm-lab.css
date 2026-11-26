@@ -27,4 +27,8 @@
 @media(max-width:530px){.al-tabs{flex-wrap:wrap;justify-content:flex-start}.al-tabs button{padding:8px}.al-surface svg text,.al-surface svg .al-axis-title{font-size:28px}.al-case-chart svg text{font-size:31px}.al-ledger-state{max-width:none}.al-model-comparison>div>small{line-height:1.6}.al-case-tooltip{position:static;margin:8px 0;max-width:none}.al-support{grid-template-columns:1fr}.al-support p{grid-column:1;grid-row:auto}.al-support>span,.al-support strong{grid-column:1}.al-surface-inspector>.al-eyebrow{font-size:12px}.al-surface-number small{font-size:12px}}
 @media(max-width:530px){.al-case-chart svg .al-mid-tick{display:none}}
 .al-mobile-axis-note{display:none}@media(max-width:530px){.al-mobile-axis-note{display:block;font-size:12px;color:var(--al-muted);margin:0 0 8px}.al-surface svg .al-axis-y-title{display:none}}
-.al-history-link{color:var(--al-accent);text-decoration:underline;text-underline-offset:.2em}
+.al-opening-read { max-width: 56rem; }
+.al-opening-read p strong { color: var(--al-text); font-weight: 600; }
+.al-opening-links { display: flex; flex-wrap: wrap; gap: .45rem 1.4rem; margin-top: .85rem; }
+.al-opening-links a { color: var(--al-accent); font-size: .9rem; text-decoration: underline; text-underline-offset: .22em; }
+.al-opening-links a:hover, .research-evidence-link:hover { color: var(--foreground); }

@@ -2,7 +2,19 @@ import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {readFile} from 'node:fs/promises';
 import {buildDecisionBrief,renderDecisionBrief} from '../lib/decision-brief.ts';
+import {deriveProbabilityAudit} from '../lib/probability-audit.ts';
 const snapshot=JSON.parse(await readFile(new URL('../data/snapshot.json',import.meta.url),'utf8'));
+
+test('printable memo uses the current original forecast band on the common evaluation dates', () => {
+  const audit = deriveProbabilityAudit(snapshot);
+  const index = Math.min(4, Math.floor(snapshot.latest.probability * 5));
+  const band = audit.bins.original[index];
+  const memo = renderDecisionBrief(snapshot);
+  if (band.n) assert.ok(memo.includes(`${band.positiveWindows} of ${band.n} forecast windows`));
+  assert.ok(memo.includes('#calibration'));
+  const legacy = {...snapshot, innovation: undefined};
+  assert.ok(renderDecisionBrief(legacy).includes('no mature forecasts in the probability band'));
+});
 
 test('memo preserves forecast horizon, actual observation dates and the current prospective count',()=>{
  const b=buildDecisionBrief(snapshot),html=renderDecisionBrief(snapshot);

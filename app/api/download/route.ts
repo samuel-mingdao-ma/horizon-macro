@@ -1,5 +1,6 @@
 import snapshot from '../../../data/snapshot.json';
 import { getMacroSnapshot, uncachedResearchUrl } from '../../../lib/live-data';
+import { deriveProbabilityAudit, probabilityAuditCsv } from '../../../lib/probability-audit';
 
 const files = {
   panel: {path:'panel.csv',type:'text/csv; charset=utf-8'},
@@ -10,6 +11,15 @@ const files = {
 
 export async function GET(request: Request) {
   const file = new URL(request.url).searchParams.get('file') ?? 'snapshot';
+  if (file === 'probability') {
+    const data = await getMacroSnapshot(snapshot);
+    const audit = deriveProbabilityAudit(data);
+    return new Response(probabilityAuditCsv(audit), {headers: {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': 'attachment; filename="horizon-probability-audit.csv"',
+      'Cache-Control': 'no-store',
+    }});
+  }
   if (file === 'snapshot') {
     const data = await getMacroSnapshot(snapshot);
     return new Response(JSON.stringify(data, null, 2), {headers:{'Content-Type':'application/json; charset=utf-8','Content-Disposition':'attachment; filename="horizon-snapshot.json"','Cache-Control':'no-store'}});
@@ -25,5 +35,5 @@ export async function GET(request: Request) {
     }catch{/* Bundled, dated downloads remain available if the remote source fails. */}
     return Response.redirect(new URL(`/data/${entry.path}`,request.url),303);
   }
-  return Response.json({error:'Choose snapshot, panel, predictions, audit, or ledger.'},{status:400});
+  return Response.json({error:'Choose snapshot, panel, predictions, audit, probability, or ledger.'},{status:400});
 }

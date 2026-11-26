@@ -1,5 +1,5 @@
 'use client';
-import {useState} from 'react';
+import {useMemo,useState} from 'react';
 import {ArrowDownToLine,CircleHelp,RefreshCw} from 'lucide-react';
 import type {Snapshot} from '../lib/types';
 import {buildDecisionBrief,briefMonth,briefPct} from '../lib/decision-brief';
@@ -11,7 +11,7 @@ const money=(n:number)=>new Intl.NumberFormat('en-US',{style:'currency',currency
 
 export default function DecisionBrief({data}:{data:Snapshot}){
  const [candidate,setCandidate]=useState(false),[target,setTarget]=useState(.3),[shift,setShift]=useState(0);
- const b=buildDecisionBrief(data),audit=data.innovation,usingCandidate=candidate&&!!audit;
+ const b=useMemo(()=>buildDecisionBrief(data),[data]),audit=data.innovation,usingCandidate=candidate&&!!audit;
  const model=usingCandidate?audit!.model:data.model;
  const originalFeatures=usingCandidate?audit!.latest.features:data.latest.features;
  const features={slope:originalFeatures.slope+shift/100,credit:originalFeatures.credit,labor:originalFeatures.labor};
@@ -24,7 +24,7 @@ export default function DecisionBrief({data}:{data:Snapshot}){
  return <article className="decision-brief">
   <div className="db-heading"><div><div className="db-eyebrow">DECISION BRIEF · {b.issue.toUpperCase()}</div><h1>{b.headline}</h1><p>A dated economic view, explicit revision triggers, and a separate rates-risk check.</p></div><div className="db-download-wrap"><a className="db-download" href="/api/brief"><ArrowDownToLine size={16}/> Download base-case memo</a><small>Printable HTML · dated base inputs</small></div></div>
   <div className="db-dates"><span>Model inputs <strong>{b.features}</strong></span><span>Forecast window <strong>{b.horizon}</strong></span><span>Source state <strong>{data.meta.refresh?.status==='fallback'?'Dated fallback':data.meta.refresh?.source==='github-actions'?'Scheduled research':'Dated research inputs'}</strong></span></div>
-  <section className="db-thesis"><div><span className="db-eyebrow">THE CURRENT READ</span><strong className="db-number">{briefPct(b.probability)}</strong><span>original model estimate</span></div><div><p>{b.signal}</p><p>{b.interpretation}</p></div></section>
+  <section className="db-thesis"><div><span className="db-eyebrow">THE CURRENT READ</span><strong className="db-number">{briefPct(b.probability)}</strong><span>original model estimate</span></div><div><p>{b.signal}</p><p>{b.interpretation}</p><a className="research-evidence-link" href="#calibration">Check historical outcomes at this probability level</a></div></section>
   <section className="db-outlook"><div><h2>A view with conditions.</h2><p>{b.thesis}</p></div><dl><div><dt>Inflation · {b.inflationDate}</dt><dd>{fixed(data.latest.indicators.inflation,1)}% <small>year over year</small></dd></div><div><dt>Unemployment · {b.indicatorDate}</dt><dd>{fixed(data.latest.indicators.unemployment,1)}%</dd></div><div><dt>Policy rate · {b.indicatorDate}</dt><dd>{fixed(data.latest.indicators.fedFunds)}%</dd></div></dl></section>
   <section className="db-trigger"><div className="db-section-head"><div><span className="db-eyebrow">REVERSE THE QUESTION</span><h2>What credit level would cross the alarm?</h2><p>Hold labor fixed, choose a curve slope, and solve the fitted model backwards.</p></div><button className="db-reset" onClick={()=>{setCandidate(false);setTarget(.3);setShift(0);}}><RefreshCw size={14}/> Reset</button></div>
    <div className="db-trigger-controls"><div className="db-model-switch" role="group" aria-label="Trigger model"><button aria-pressed={!usingCandidate} onClick={()=>setCandidate(false)}>Original model</button><button disabled={!audit} aria-pressed={usingCandidate} onClick={()=>setCandidate(true)}>Interaction candidate</button></div><label>Alarm probability <output>{briefPct(target)}</output><input aria-label="Trigger alarm probability" type="range" min="0.1" max="0.8" step="0.05" value={target} onChange={event=>setTarget(Number(event.target.value))}/></label><label>Curve slope shift <output>{shift>0?'+':''}{shift} bp</output><input aria-label="Trigger curve slope shift" type="range" min="-200" max="200" step="10" value={shift} onChange={event=>setShift(Number(event.target.value))}/></label></div>
