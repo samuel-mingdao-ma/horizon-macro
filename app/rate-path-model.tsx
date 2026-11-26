@@ -43,7 +43,7 @@ function month(value: string | null | undefined) {
     : '—';
 }
 
-function previousMonth(value: string, offset: number) {
+function offsetMonth(value: string, offset: number) {
   const [year, dateMonth] = value.slice(0, 7).split('-').map(Number);
   return new Date(Date.UTC(year, dateMonth - 1 + offset, 1)).toISOString().slice(0, 10);
 }
@@ -103,6 +103,12 @@ export default function RatePathModel({ data }: { data: Snapshot }) {
 
   const cohorts = [ratePath.metrics.all, ratePath.metrics.recent, ...ratePath.metrics.decades];
   const selectedCohort = cohorts.find((cohort) => cohort.id === selectedId) ?? ratePath.metrics.all;
+  const positiveWindows = ratePath.history
+    .filter(row => row.target === 1 && row.recentBlendProbability != null && selectedCohort.start
+      && selectedCohort.end && row.date >= selectedCohort.start && row.date <= selectedCohort.end)
+    .map(row => ({start: offsetMonth(row.date, 1), end: offsetMonth(row.date, 12)}));
+  const downturns = data.recessions.filter(period =>
+    positiveWindows.some(window => window.start < period.end && window.end >= period.start)).length;
   const current = ratePath.latest;
   const prospective = ratePath.prospective;
   const receipt = prospective?.latestReceipt;
@@ -261,8 +267,7 @@ export default function RatePathModel({ data }: { data: Snapshot }) {
             {month(selectedCohort.start)} – {month(selectedCohort.end)}
           </span>
           <span>
-            {selectedCohort.n} mature common issues · {selectedCohort.positiveWindows} recession-positive
-            windows
+            {selectedCohort.n} mature common issues · {selectedCohort.positiveWindows} positive windows covering {downturns} dated {downturns === 1 ? 'recession' : 'recessions'}
           </span>
         </div>
         <div className="rt-score-workspace">
@@ -437,7 +442,7 @@ export default function RatePathModel({ data }: { data: Snapshot }) {
             </strong>
             <p>
               10Y minus 3M slope in {month(current.featureDate)}, less its value in{' '}
-              {month(previousMonth(current.featureDate, -6))}.
+              {month(offsetMonth(current.featureDate, -6))}.
             </p>
           </article>
           <article>
@@ -449,7 +454,7 @@ export default function RatePathModel({ data }: { data: Snapshot }) {
             </strong>
             <p>
               Monthly effective federal funds rate in {month(current.featureDate)}, less its value in{' '}
-              {month(previousMonth(current.featureDate, -12))}.
+              {month(offsetMonth(current.featureDate, -12))}.
             </p>
           </article>
         </div>
