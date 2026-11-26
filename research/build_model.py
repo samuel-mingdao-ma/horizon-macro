@@ -19,6 +19,7 @@ import requests
 from provider_fallback import parse_fred_csv, fallback_dataset, previous_provenance, last_date
 from innovation import build_innovation
 from rate_path import build_rate_path
+from regime_prior import build_regime_prior
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW = ROOT / 'research' / 'raw'
@@ -388,6 +389,7 @@ def main():
         generated_at=snapshot['meta']['generatedAt'])
     snapshot['ratePath'] = build_rate_path(panel, source, history_frame, latest, fit_logit, score, metrics,
         generated_at=snapshot['meta']['generatedAt'])
+    snapshot['regimePrior'] = build_regime_prior(panel, history_frame, latest, metrics)
     # A compact panel with observation-month sources and issue-month lagged inputs.
     download=panel.copy()
     download.index.name='issue_date'
@@ -402,6 +404,8 @@ def main():
     pd.DataFrame(snapshot['innovation']['history']).to_csv(ROOT/'public'/'data'/'alarm-audit.csv',index=False,float_format='%.10f')
     pd.DataFrame(snapshot['ratePath']['history']).to_csv(
         ROOT / 'public' / 'data' / 'rate-path.csv', index=False, float_format='%.12f')
+    pd.DataFrame(snapshot['regimePrior']['history']).to_csv(
+        ROOT / 'public' / 'data' / 'regime-prior.csv', index=False, float_format='%.12f')
     # Audit trail records the full fold boundary data separately for review.
     (ROOT/'research'/'folds.json').write_text(json.dumps(clean(folds),indent=2))
     print(json.dumps(clean(dict(latest=latest,metrics=evaluation,sensitivity=sensitivity,model=final_model,historyN=len(history))),indent=2))
