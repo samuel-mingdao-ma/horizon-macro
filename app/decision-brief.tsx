@@ -1,0 +1,46 @@
+'use client';
+import {useState} from 'react';
+import {ArrowDownToLine,CircleHelp,RefreshCw} from 'lucide-react';
+import type {Snapshot} from '../lib/types';
+import {buildDecisionBrief,briefMonth,briefPct} from '../lib/decision-brief';
+import {probabilityAtFeatures,solveCreditTrigger} from '../lib/risk-triggers';
+import './decision-brief.css';
+
+const fixed=(n:number,d=2)=>Number.isFinite(n)?n.toFixed(d):'—';
+const money=(n:number)=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n);
+
+export default function DecisionBrief({data}:{data:Snapshot}){
+ const [candidate,setCandidate]=useState(false),[target,setTarget]=useState(.3),[shift,setShift]=useState(0);
+ const b=buildDecisionBrief(data),audit=data.innovation,usingCandidate=candidate&&!!audit;
+ const model=usingCandidate?audit!.model:data.model;
+ const originalFeatures=usingCandidate?audit!.latest.features:data.latest.features;
+ const features={slope:originalFeatures.slope+shift/100,credit:originalFeatures.credit,labor:originalFeatures.labor};
+ const result=solveCreditTrigger({model,features,targetProbability:target,trainingPoints:audit?.surface.trainingPoints,supportRadiusStd:.35});
+ const modelIssue=usingCandidate?audit!.issueDate:data.latest.issueDate,featureDate=usingCandidate?audit!.featureDate:data.latest.featureDate;
+ const w=760,h=280,left=48,right=22,top=20,bottom=45,pw=w-left-right,ph=h-top-bottom;
+ const xMin=-1.5,xMax=2.5,x=(credit:number)=>left+(credit-xMin)/(xMax-xMin)*pw,y=(p:number)=>top+(1-p)*ph;
+ const path=Array.from({length:121},(_,i)=>{const credit=xMin+(xMax-xMin)*i/120;return (i?'L':'M')+x(credit).toFixed(2)+','+y(probabilityAtFeatures(model,{...features,credit})).toFixed(2);}).join(' ');
+ const trigger=result.requiredCredit;
+ return <article className="decision-brief">
+  <div className="db-heading"><div><div className="db-eyebrow">DECISION BRIEF · {b.issue.toUpperCase()}</div><h1>{b.headline}</h1><p>A dated economic view, explicit revision triggers, and a separate rates-risk check.</p></div><div className="db-download-wrap"><a className="db-download" href="/api/brief"><ArrowDownToLine size={16}/> Download base-case memo</a><small>Printable HTML · dated base inputs</small></div></div>
+  <div className="db-dates"><span>Model inputs <strong>{b.features}</strong></span><span>Forecast window <strong>{b.horizon}</strong></span><span>Source state <strong>{data.meta.refresh?.status==='fallback'?'Dated fallback':data.meta.refresh?.source==='github-actions'?'Scheduled research':'Dated research inputs'}</strong></span></div>
+  <section className="db-thesis"><div><span className="db-eyebrow">THE CURRENT READ</span><strong className="db-number">{briefPct(b.probability)}</strong><span>original model estimate</span></div><div><p>{b.signal}</p><p>{b.interpretation}</p></div></section>
+  <section className="db-outlook"><div><h2>A view with conditions.</h2><p>{b.thesis}</p></div><dl><div><dt>Inflation · {b.inflationDate}</dt><dd>{fixed(data.latest.indicators.inflation,1)}% <small>year over year</small></dd></div><div><dt>Unemployment · {b.indicatorDate}</dt><dd>{fixed(data.latest.indicators.unemployment,1)}%</dd></div><div><dt>Policy rate · {b.indicatorDate}</dt><dd>{fixed(data.latest.indicators.fedFunds)}%</dd></div></dl></section>
+  <section className="db-trigger"><div className="db-section-head"><div><span className="db-eyebrow">REVERSE THE QUESTION</span><h2>What credit level would cross the alarm?</h2><p>Hold labor fixed, choose a curve slope, and solve the fitted model backwards.</p></div><button className="db-reset" onClick={()=>{setCandidate(false);setTarget(.3);setShift(0);}}><RefreshCw size={14}/> Reset</button></div>
+   <div className="db-trigger-controls"><div className="db-model-switch" role="group" aria-label="Trigger model"><button aria-pressed={!usingCandidate} onClick={()=>setCandidate(false)}>Original model</button><button disabled={!audit} aria-pressed={usingCandidate} onClick={()=>setCandidate(true)}>Interaction candidate</button></div><label>Alarm probability <output>{briefPct(target)}</output><input aria-label="Trigger alarm probability" type="range" min="0.1" max="0.8" step="0.05" value={target} onChange={event=>setTarget(Number(event.target.value))}/></label><label>Curve slope shift <output>{shift>0?'+':''}{shift} bp</output><input aria-label="Trigger curve slope shift" type="range" min="-200" max="200" step="10" value={shift} onChange={event=>setShift(Number(event.target.value))}/></label></div>
+   <p className="db-vintage">{usingCandidate?'Exploratory candidate':'Original model'} · issue {briefMonth(modelIssue)} · inputs {briefMonth(featureDate)} · labor fixed at {fixed(features.labor)} pp · curve {fixed(features.slope)} pp.</p>
+   <div className="db-trigger-grid"><div className="db-trigger-chart"><svg viewBox={'0 0 '+w+' '+h} role="img" aria-label="Conditional recession probability as credit conditions change, with the selected alarm threshold and its solved credit level.">
+    {[0,.25,.5,.75,1].map(p=><g key={p}><line x1={left} x2={w-right} y1={y(p)} y2={y(p)} stroke="currentColor" opacity=".12"/><text x={left-10} y={y(p)+4} textAnchor="end">{p*100}%</text></g>)}
+    {[-1,0,1,2].map(c=><text key={c} x={x(c)} y={h-20} textAnchor="middle">{c>0?'+':''}{c}</text>)}
+    <line x1={left} x2={w-right} y1={y(target)} y2={y(target)} stroke="#e5af81" strokeDasharray="5 5"/><path d={path} fill="none" stroke="#c5f699" strokeWidth="2.5"/>
+    {features.credit>=xMin&&features.credit<=xMax&&<circle cx={x(features.credit)} cy={y(result.currentP)} r="5" fill="#101710" stroke="#fff" strokeWidth="2"/>}
+    {trigger!==null&&trigger>=xMin&&trigger<=xMax&&<g><line x1={x(trigger)} x2={x(trigger)} y1={y(target)} y2={h-bottom} stroke="#e5af81" strokeDasharray="3 4"/><circle cx={x(trigger)} cy={y(target)} r="5" fill="#e5af81"/></g>}
+    <text x={left+pw/2} y={h-1} textAnchor="middle">Credit conditions index · tighter to the right</text>
+   </svg><div className="db-legend"><span><i/>Conditional probability</span><span><i/>Selected alarm</span><span><i/>Current credit at chosen slope</span></div></div>
+   <div className="db-trigger-result"><span className="db-eyebrow">{result.relation==='at-most'?'CREDIT AT OR BELOW':result.relation==='at-least'?'CREDIT AT OR ABOVE':'NO CREDIT CROSSING'}</span><strong>{trigger===null?'—':fixed(trigger)}</strong><p>{trigger===null?'At this slope the fitted credit effect is insensitive; changing credit cannot produce a unique crossing.':'The fitted estimate reaches '+briefPct(target)+' at this index level, holding the chosen curve and labor inputs fixed.'}</p><dl><div><dt>Current credit</dt><dd>{fixed(features.credit)}</dd></div><div><dt>Required shift</dt><dd>{result.creditShift===null?'—':(result.creditShift>0?'+':'')+fixed(result.creditShift)} index</dd></div><div><dt>Probability at chosen slope</dt><dd>{briefPct(result.currentP)}</dd></div><div><dt>Nearby training inputs at trigger</dt><dd>{result.support.targetN===null?'Unavailable':result.support.targetN+' months'}</dd></div></dl>{(result.support.outsideObservedCreditRange||(result.support.targetN!==null&&result.support.targetN<10))&&<p className="db-sparse">Sparse or out-of-range historical support. This crossing can be extrapolation.</p>}</div></div>
+   <div className="db-note"><CircleHelp size={17}/><p>An algebraic model crossing is not an economic tipping point. The interaction candidate can change the direction of the credit effect under inversion. Nearby counts measure support in the curve–credit plane only; they ignore labor distance and do not measure certainty. Both models retain their calibration and revised-history limitations.</p></div>
+  </section>
+  <section className="db-rates"><div><span className="db-eyebrow">A SEPARATE RISK BUDGET</span><h2>Rates risk needs its own stress test.</h2><p>Illustrative $1m ten-year bond, fixed semiannual coupon set at the {fixed(data.latest.indicators.gs10)}% base yield. Instantaneous parallel yield shocks keep cash flows fixed.</p></div><div className="db-rate-outcomes"><div><span>Yield −100 bp</span><strong>{money(b.bondDown.priceChange)}</strong></div><div><span>Yield +100 bp</span><strong>{money(b.bondUp.priceChange)}</strong></div><small>Exact repricing. No passage of time, carry, funding costs or investment-return forecast.</small></div></section>
+  <section className="db-accountability"><h2>What would change this view?</h2><p>Credit above zero or a labor gap of at least 0.50 pp changes the exploratory confirmation rule. A fitted probability crossing changes the selected research alarm. A future outcome changes the prospective score. These are three different tests.</p><p>{b.caveat}</p><p>{b.earlyWarningSummary} <a href="#model">Inspect pre-downturn evidence</a>.</p><div><span>{data.prospective?.receiptCount??0} frozen forecast receipts</span><span>{data.prospective?.maturedCount??0} matured outcomes</span><a href="/api/download?file=ledger">Inspect the forecast record</a></div></section>
+ </article>;
+}

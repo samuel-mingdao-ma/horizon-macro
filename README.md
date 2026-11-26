@@ -1,6 +1,6 @@
 # HORIZON · U.S. Macro Risk Observatory
 
-[Live website](https://horizon-macro-observatory.samel23.chatgpt.site) · [Public source](https://github.com/samuel-mingdao-ma/horizon-macro) · [Refresh history](https://github.com/samuel-mingdao-ma/horizon-macro/actions/workflows/refresh-research.yml)
+[Live website](https://horizon-macro-observatory.samel23.chatgpt.site) · [Decision brief](https://horizon-macro-observatory.samel23.chatgpt.site/#brief) · [Model audit](https://horizon-macro-observatory.samel23.chatgpt.site/#model) · [Public source](https://github.com/samuel-mingdao-ma/horizon-macro) · [Refresh history](https://github.com/samuel-mingdao-ma/horizon-macro/actions/workflows/refresh-research.yml)
 
 An updating quantitative research website that asks: **What do the Treasury curve, credit conditions and labor momentum imply about the chance of at least one U.S. recession month in the next twelve months?**
 
@@ -13,6 +13,8 @@ HORIZON combines public Federal Reserve data, interpretable models, chronologica
 - Training-only standardization, expanding-window estimation and separation of training/test target windows.
 - Comparison with a curve-only model and an expanding historical base rate.
 - An exploratory curve–credit interaction, a conditional risk surface with historical support counts, and explicit attempts to falsify a proposed improvement.
+- A decision brief with reverse-solved credit alarm triggers and a downloadable, dated HTML research memo.
+- Expansion-issued versus all-issue evaluation and episode-specific warning lead times with explicit coverage.
 - Decision-cost comparisons that expose the price of demanding credit/labor confirmation.
 - Frozen monthly forecasts with actual capture timestamps, model/input hashes, separate outcome scoring, and no retrospective filling of missed months.
 - Honest interpretation of discrimination, calibration, model failure and conditional sensitivities.
@@ -33,6 +35,35 @@ Evaluation uses 430 mature monthly forecast issues, January 1990–October 2025,
 The model improves ranking relative to the curve-only comparator but **does not beat the base rate on probability error**. AUC 0.7822 does not mean 78.22% accuracy. A major failure was July 2023: a 96.675% estimate for August 2023–July 2024, while the currently published recession target is zero. This false alarm is retained and explained.
 
 An **exploratory, post-hoc 50/50 blend** of the model and each fold's historical base rate has AUC 0.7665, Brier 0.14047 and log loss 0.44630 on those same 430 months. It illustrates a shrinkage hypothesis, but was proposed after viewing the test results and is **not independently validated**. It does not replace the production headline; future-vintage or untouched-period evaluation is required.
+
+## A view with explicit revision triggers
+
+Open the [Decision brief](https://horizon-macro-observatory.samel23.chatgpt.site/#brief) for the current economic interpretation and a reverse question: **what credit level makes the fitted estimate cross a chosen research alarm?** Hold the labor gap and curve slope fixed, choose a threshold, and solve the logistic model backwards. At the initial September 2026 inputs—curve **1.05 pp**, labor gap **0.00 pp**, credit **−0.03475**—the illustrative **30%** crossing is:
+
+| Model | Required credit index | Shift from current credit |
+| --- | ---: | ---: |
+| Original | 0.38550 | +0.42025 |
+| Interaction candidate | 0.36063 | +0.39538 |
+
+These are **algebraic model crossings, not causal economic tipping points or confidence bounds**. Under inversion the candidate can reverse the sign of its credit sensitivity; an insensitive model has no unique crossing. Nearby-input counts reveal support in the curve–credit plane and do not measure certainty.
+
+[Download the dated HTML memo](https://horizon-macro-observatory.samel23.chatgpt.site/api/brief) (`GET /api/brief`) for the outlook, source dates, caveats, and an exact ±100 bp repricing of an illustrative $1m ten-year semiannual par-coupon bond. The rate shock is separate from recession probability and from the curve-slope control: cash flows stay fixed, with no carry, elapsed time, funding costs, or forecast return. The memo reflects the source snapshot retrieved for that download; it is not a frozen prospective receipt.
+
+## Does the result survive an expansion-only evaluation?
+
+The [Model & evidence audit](https://horizon-macro-observatory.samel23.chatgpt.site/#model) defaults to **expansion-issued only**. Restricting the same originally trained forecasts to issue-month USREC = 0 leaves **394 mature issues and 43 positive forward windows**, compared with **430/75** in the all-issue sample. No onset model is retrained.
+
+| Comparator | Expansion-issued AUC | Expansion-issued Brier |
+| --- | ---: | ---: |
+| Original | 0.86524 | 0.14599 |
+| Curve only | 0.88054 | 0.14297 |
+| Interaction candidate | 0.86524 | 0.14463 |
+| Historical base rate | 0.33446 | 0.13169 |
+| Exploratory blend | 0.86497 | 0.11252 |
+
+**The apparent ranking advantage reverses:** curve-only AUC exceeds the original inside the expansion-issued cohort, although the original leads in the full sample. This is a diagnostic of the question and cohort, not proof of a new strategy. USREC's contemporaneous regime is known retrospectively here; this filter does not recreate information available at issuance.
+
+The episode table examines strictly pre-start expansion forecasts in the preceding twelve months. The first USREC = 1 month in 1990 is **August**; the available history supplies only **7/12** prior months. It is visibly partial and excluded from complete-episode aggregates, which have **three** fully observed episodes. A warning in the partial 1990 case must not be reported as four fully observed successes out of four.
 
 ## Alarm Lab: the innovation and its result
 
@@ -80,7 +111,7 @@ python3 research/forecast_ledger.py
 python3 research/test_model.py
 python3 research/test_innovation.py
 python3 research/test_forecast_ledger.py
-node --test scripts/refresh-data.test.mjs scripts/refresh-data.bond.test.mjs
+node --test scripts/*.test.mjs
 ```
 
 For an offline reconstruction using the saved raw observations:
@@ -89,7 +120,7 @@ For an offline reconstruction using the saved raw observations:
 python3 research/build_model.py --offline --as-of 2026-11-25
 ```
 
-The final publication checks passed **36 Python tests, 15 Node tests, and TypeScript checking**. The Python tests verify target timing, unavailable future labels, training eligibility, training-only scaling, equivalent scoring/decomposition, numerical estimation, credit aggregation and missing labor observations. Additional checks recompute candidate metrics, fixed case subsets, confirmation rules, surface support, receipt hash integrity, and separate outcome maturation. The Node tests verify Python/JavaScript parity and live-inference behavior. Neither test suite establishes predictive profitability.
+The Python tests verify target timing, unavailable future labels, training eligibility, training-only scaling, equivalent scoring/decomposition, numerical estimation, credit aggregation and missing labor observations. Additional checks recompute candidate metrics, fixed case subsets, confirmation rules, surface support, inverse credit crossings, cohort scores, episode coverage, receipt hash integrity, and separate outcome maturation. Use the current command output for test counts; they change as coverage grows. The Node tests verify Python/JavaScript parity and live-inference behavior. Neither test suite establishes predictive profitability.
 
 ## How updates work
 
@@ -108,7 +139,7 @@ When forking this project, change `RESEARCH_SNAPSHOT_URL` in `lib/live-data.ts` 
 
 ## Cloud source access
 
-**Verified 25 November 2026:** [cloud refresh 45710561484](https://github.com/samuel-mingdao-ma/horizon-macro/actions/runs/45710561484) completed successfully, fetched all eleven series through the official FRED API, passed all 29 checks, and committed the refreshed research. The key is stored in the repository Actions secret; it is absent from public source and artifacts.
+**Verified 25 November 2026:** [cloud refresh 45710561484](https://github.com/samuel-mingdao-ma/horizon-macro/actions/runs/45710561484) completed successfully, fetched all eleven series through the official FRED API, passed its checks, and committed the refreshed research. The key is stored in the repository Actions secret; it is absent from public source and artifacts.
 
 The website is public and its API/download routes are verified. Cloud runners can time out when accessing FRED graph downloads and the FRED-MD website. The full-refresh workflow therefore also supports the documented FRED API via the repository secret `FRED_API_KEY`.
 
@@ -141,8 +172,13 @@ Read [the full methodology](research/METHODOLOGY.md), [Alarm Lab research](resea
 app/page.tsx                 server entry and initial research snapshot
 app/dashboard.tsx            navigation and original research views
 app/alarm-lab.tsx            conditional surface, cases, costs and receipt UI
+app/decision-brief.tsx       economic view and reverse credit triggers
+app/warning-audit.tsx        expansion cohorts and pre-episode warning coverage
 app/api/macro/route.ts       live snapshot endpoint
 app/api/download/route.ts    JSON/CSV download endpoints
+app/api/brief/route.ts       dated, downloadable HTML research memo
+lib/risk-triggers.ts        validated inverse-logistic credit crossings
+lib/warning-audit.ts        retrospective cohort and episode diagnostics
 lib/live-data.ts             FRED parsing, alignment, scoring and fallback
 research/build_model.py     full-history estimation and validation
 research/test_model.py      quantitative invariants

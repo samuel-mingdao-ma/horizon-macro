@@ -2,6 +2,31 @@
 
 Initial publication, **November 2026 forecast issue**. Exact research-build and receipt-capture timestamps are recorded in the downloadable artifacts. The original model's 2023 false alarm motivates a specific question: **Does credit or labor confirmation improve a yield-curve warning, and what does waiting for confirmation cost?** The project contribution is an inspectable workflow—conditional modelling, failure replay, decision costs, and frozen future forecasts. It does not claim a new statistical method or an established trading advantage.
 
+## Decision brief: state a view and define what would change it
+
+The [Decision brief](https://horizon-macro-observatory.samel23.chatgpt.site/#brief) connects the current signal reading to explicit monitoring conditions. Its reverse-trigger tool fixes the curve and labor inputs, chooses an illustrative alarm level, and solves the fitted model for the required credit value. This makes a conditional view inspectable without claiming that the model is well calibrated.
+
+For raw coefficients, let curve slope be `s`, labor gap `l`, credit index `c`, intercept `b`, and coefficients `a_s`, `a_l`, `a_c`, `a_i`. At fixed `s` and `l`:
+
+```text
+k(s) = a_c + a_i × max(−s, 0)
+c* = [log(p*/(1−p*)) − b − a_s×s − a_l×l] / k(s)
+```
+
+For the original model, `a_i = 0`. If `k(s) > 0`, crossing the probability alarm requires credit at or above `c*`; if negative, the inequality reverses. If the credit effect is zero, changing credit cannot produce a unique finite crossing. Solvers verify parameter consistency and recompute the interaction when inputs change.
+
+At the initial inputs of slope **1.05 pp**, labor gap **0.00 pp**, and credit **−0.03475**, a **30%** threshold gives original `c* = 0.38550`, a **+0.42025 index** shift; the candidate gives `0.36063`, a **+0.39538 index** shift. These units are index units, not basis points. They are **model crossings, not causal tipping points, confidence intervals, or probabilities that credit will reach that value**. Input-support counts use only the curve–credit plane and ignore labor distance.
+
+Three triggers remain distinct: credit above zero or labor gap at least 0.50 pp activates the exploratory confirmation rule; the reverse solver crosses a selected fitted probability; and a mature future outcome changes the prospective score. One does not establish the others.
+
+The [downloadable HTML memo](https://horizon-macro-observatory.samel23.chatgpt.site/api/brief), served by `GET /api/brief`, records the retrieved snapshot's dates, current view, caveats, and separate rate exposure. It can be read or printed independently of the website. It is a dated current memo, not a frozen ledger receipt or a record of every client-side slider choice.
+
+### Course concepts: recession exposure and duration exposure are separate
+
+The memo applies cash-flow discounting to an illustrative **$1m, ten-year, semiannual coupon bond**, with its fixed coupon set at the baseline ten-year yield. Exact instantaneous repricing under ±100 bp parallel yield shifts shows rate sensitivity. The scenario lab also compares duration/convexity approximations and DV01.
+
+The macro model does not determine a future yield move, and its credit-conditions index is not a traded bond spread. The bond examples hold cash flows fixed and exclude elapsed time, carry, roll-down, funding, default, taxes, and transaction costs. Their price changes are conditional rate-risk calculations, not expected investment returns.
+
 ## The experiment
 
 The original L2 logistic model uses the curve slope, Chicago Fed credit conditions, and unemployment momentum. The challenger adds one fixed interaction:
@@ -27,6 +52,31 @@ Same 430 mature monthly issues, January 1990–October 2025; 75 positive forward
 | Exploratory equal-weight original/base-rate blend | 0.76650 | 0.14047 | 0.44630 |
 
 The interaction makes a small historical improvement over the original model. **It still loses to the base rate on probability error.** The blend has better historical Brier and log loss but was proposed after observing overconfidence; it needs an untouched or prospective test. AUC measures ranking and is not classification accuracy.
+
+### Expansion-issued audit: the ranking advantage reverses
+
+The [Model & evidence view](https://horizon-macro-observatory.samel23.chatgpt.site/#model) compares all mature issues with the subset whose issue-month USREC is zero. The latter contains **394 issues and 43 positive forward windows**, versus **430 issues and 75 positive windows** overall; 36 recession-issued rows are excluded. The existing fitted forecasts are reused. This is not a newly trained onset model.
+
+| Comparator | Expansion-issued AUC | Expansion-issued Brier |
+| --- | ---: | ---: |
+| Original | 0.86524 | 0.14599 |
+| Curve only | 0.88054 | 0.14297 |
+| Interaction candidate | 0.86524 | 0.14463 |
+| Historical base rate | 0.33446 | 0.13169 |
+| Exploratory blend | 0.86497 | 0.11252 |
+
+The original model leads curve-only AUC in the all-issue sample, but **curve only ranks better in the expansion-issued sample**. An accuracy claim therefore needs a precise evaluation question and cohort. This restriction uses retrospectively known USREC status and revised history, not information reconstructed as available in real time. It cannot be treated as an operational filter or an untouched selection procedure. AUC and Brier do not change when the alarm threshold changes; threshold-specific warning counts do.
+
+At the illustrative **30%** threshold, the episode audit uses only expansion-issued forecasts strictly within the twelve calendar months before the first USREC = 1 month:
+
+| First USREC = 1 month | Available prior months | First original alarm / lead | First curve alarm / lead | First candidate alarm / lead |
+| --- | ---: | --- | --- | --- |
+| Aug 1990 | 7/12, partial | Jan 1990 / 7 months | Jan 1990 / 7 months | Jan 1990 / 7 months |
+| Apr 2001 | 12/12, complete | May 2000 / 11 months | Apr 2000 / 12 months | May 2000 / 11 months |
+| Jan 2008 | 12/12, complete | Jan 2007 / 12 months | Jan 2007 / 12 months | Jan 2007 / 12 months |
+| Mar 2020 | 12/12, complete | Mar 2019 / 12 months | Mar 2019 / 12 months | Mar 2019 / 12 months |
+
+The 1990 episode is excluded from complete-window denominators. Each of these three rules has an alarm in **three of three complete windows** at this threshold; the sample does not support a claim of four fully observed successful tests. First USREC = 1 follows the NBER peak month under FRED's convention. Repeated alerts within one downturn do not become independent successful episodes.
 
 ### The failure survives
 
@@ -92,6 +142,7 @@ python3 research/forecast_ledger.py
 python3 research/test_model.py
 python3 research/test_innovation.py
 python3 research/test_forecast_ledger.py
+node --test scripts/*.test.mjs
 ```
 
 Rebuilding the current snapshot can change its research vintage. Existing valid monthly receipts remain frozen. Full source refresh, provider checks, and JavaScript parity checks are run through `bash scripts/refresh-data.sh`; FRED API access can be supplied through the repository Actions secret documented in the README.

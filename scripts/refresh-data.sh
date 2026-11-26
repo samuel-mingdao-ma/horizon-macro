@@ -7,4 +7,4 @@ python3 research/test_model.py
 python3 research/test_innovation.py
 python3 research/test_provider_fallback.py
 python3 research/test_forecast_ledger.py
-node --test scripts/refresh-data.test.mjs scripts/refresh-data.bond.test.mjs
+node --test scripts/*.test.mjs
