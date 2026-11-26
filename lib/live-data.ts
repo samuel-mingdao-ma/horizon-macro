@@ -192,6 +192,33 @@ export function validateResearchSnapshot(candidate: unknown, base: MacroSnapshot
       || Math.abs(audit.latest.originalProbability-latest.probability)>1e-8
       || Math.abs(score(f,audit.model).probability-audit.latest.probability)>1e-8) throw new Error('Alarm audit probability or interaction mismatch');
   }
+  if (base.ratePath) {
+    const trial = value.ratePath, trialLatest = trial?.latest;
+    const probability = (p: unknown): p is number => typeof p === 'number' && Number.isFinite(p) && p >= 0 && p <= 1;
+    if (!trialLatest || !isMonth(trialLatest.issueDate) || trialLatest.issueDate > meta.issueDate
+      || trialLatest.featureDate !== monthOffset(trialLatest.issueDate, -2)
+      || trialLatest.forecastStart !== monthOffset(trialLatest.issueDate, 1)
+      || trialLatest.forecastEnd !== monthOffset(trialLatest.issueDate, 12)
+      || !Array.isArray(trial.history) || !trial.metrics?.all?.models?.recentBlend || !trial.metrics?.recent
+      || !probability(trialLatest.rawProbability) || !probability(trialLatest.baselineProbability)
+      || !probability(trialLatest.probability)
+      || Math.abs(trialLatest.probability - (trialLatest.rawProbability + trialLatest.baselineProbability) / 2) > 1e-8) {
+      throw new Error('Missing or inconsistent rate-path research');
+    }
+    if (trialLatest.recentBlendProbability != null && (!probability(trialLatest.recentBlendProbability)
+      || !probability(trialLatest.recentPriorProbability) || !probability(trialLatest.originalProbability)
+      || Math.abs(trialLatest.recentBlendProbability - (trialLatest.originalProbability + trialLatest.recentPriorProbability) / 2) > 1e-8)) {
+      throw new Error('Invalid recent-base research probability');
+    }
+    const previous = base.ratePath.prospective?.receipts;
+    if (previous?.length) {
+      const archive = trial.prospective;
+      if (!archive?.chainValid || !Array.isArray(archive.receipts) || archive.receiptCount !== archive.receipts.length
+        || previous.some((row: {hash: string}, i: number) => archive.receipts[i]?.hash !== row.hash)) {
+        throw new Error('Rate-path forecast record missing or regressive');
+      }
+    }
+  }
   if (base.prospective) {
     const archive=value.prospective;
     if (!archive || archive.protocolVersion!==base.prospective.protocolVersion || archive.chainValid!==true

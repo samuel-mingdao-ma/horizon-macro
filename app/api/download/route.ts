@@ -6,6 +6,8 @@ const files = {
   panel: {path:'panel.csv',type:'text/csv; charset=utf-8'},
   predictions: {path:'predictions.csv',type:'text/csv; charset=utf-8'},
   audit: {path:'alarm-audit.csv',type:'text/csv; charset=utf-8'},
+  ratepath: {path:'rate-path.csv',type:'text/csv; charset=utf-8'},
+  ratepathreceipts: {path:'rate-path-receipts.jsonl',type:'application/x-ndjson; charset=utf-8'},
   ledger: {path:'forecast-ledger.jsonl',type:'application/x-ndjson; charset=utf-8'},
 } as const;
 
@@ -30,10 +32,10 @@ export async function GET(request: Request) {
       const url=`https://raw.githubusercontent.com/samuel-mingdao-ma/horizon-macro/main/public/data/${entry.path}`;
       const response=await fetch(uncachedResearchUrl(url),{signal:AbortSignal.timeout(5000),cache:'no-store'});
       const body=await response.text();
-      const valid=file==='ledger' ? body.trim().split('\n').every(line=>{try{return typeof JSON.parse(line).hash==='string';}catch{return false;}}) : /^(date|issueDate|issue_date),/.test(body)&&body.includes('\n');
+      const valid=entry.path.endsWith('.jsonl') ? body.trim().split('\n').every(line=>{try{return typeof JSON.parse(line).hash==='string';}catch{return false;}}) : /^(date|issueDate|issue_date),/.test(body)&&body.includes('\n');
       if(response.ok&&body.trim()&&valid) return new Response(body,{headers:{'Content-Type':entry.type,'Content-Disposition':`attachment; filename="horizon-${entry.path}"`,'Cache-Control':'public, max-age=3600','X-Research-Source':'scheduled-github-research'}});
     }catch{/* Bundled, dated downloads remain available if the remote source fails. */}
     return Response.redirect(new URL(`/data/${entry.path}`,request.url),303);
   }
-  return Response.json({error:'Choose snapshot, panel, predictions, audit, probability, or ledger.'},{status:400});
+  return Response.json({error:'Choose snapshot, panel, predictions, audit, probability, ledger, ratepath, or ratepathreceipts.'},{status:400});
 }

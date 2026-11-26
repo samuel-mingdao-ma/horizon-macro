@@ -1,9 +1,11 @@
+import type { RatePathSnapshot } from './rate-path-types';
 import type { ProspectiveSummary } from './ledger-types';
 import type { InnovationSnapshot } from './innovation-types';
 export type FeatureKey = 'slope'|'credit'|'labor';
 export type HistoryRow = {date:string;probability:number;baseline:number;curveProbability:number|null;target:number|null;recession:number;slope:number;credit:number;labor:number;featureDate:string};
 export type ModelMetrics = {auc:number;brier:number;logLoss:number};
 export type Snapshot = {
+ ratePath?: RatePathSnapshot;
  innovation?: InnovationSnapshot;
  prospective?: ProspectiveSummary;
  meta:{generatedAt:string;issueDate:string;featureDate:string;forecastStart:string;forecastEnd:string;dataRefresh?:{mode:string;note?:string;checkedAt?:string;perSeries?:Record<string,unknown>};refresh?:{status:string;source?:string;sourceUpdatedAt?:string;checkedAt:string;inputMonthsBehind:number;note:string};[key:string]:unknown};

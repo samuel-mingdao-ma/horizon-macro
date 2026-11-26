@@ -138,3 +138,18 @@ test('research refresh cannot drop or regress its prospective archive',async()=>
   const badHash=structuredClone(snapshot);badHash.prospective.lastHash='a'.repeat(64);
   assert.throws(()=>validateResearchSnapshot(badHash,snapshot,now),/forecast archive/);
 });
+
+test('refreshes retain the new trial and verify each published blend formula', async () => {
+  const {validateResearchSnapshot} = await import('../lib/live-data.ts');
+  const now = new Date(snapshot.meta.generatedAt);
+  const missing = structuredClone(snapshot);
+  delete missing.ratePath;
+  assert.throws(() => validateResearchSnapshot(missing, snapshot, now), /rate-path research/);
+  const corrupt = structuredClone(snapshot);
+  corrupt.ratePath.latest.recentBlendProbability = corrupt.ratePath.latest.recentBlendProbability === 1 ? 0 : 1;
+  assert.throws(() => validateResearchSnapshot(corrupt, snapshot, now), /recent-base research/);
+  const empty = structuredClone(snapshot);
+  empty.ratePath.prospective = {chainValid: true, receiptCount: 0, receipts: []};
+  if (snapshot.ratePath.prospective?.receiptCount > 0)
+    assert.throws(() => validateResearchSnapshot(empty, snapshot, now), /record missing or regressive/);
+});

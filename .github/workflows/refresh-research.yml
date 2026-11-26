@@ -32,6 +32,7 @@ jobs:
           path: |
             data/snapshot.json
             data/forecast-ledger.jsonl
+            data/rate-path-receipts.jsonl
             research/prospective-protocol.json
             public/data/
             research/raw/
@@ -41,7 +42,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/snapshot.json data/forecast-ledger.jsonl public/data research/raw research/provider-cache research/prospective-protocol.json
+          git add data/snapshot.json data/forecast-ledger.jsonl data/rate-path-receipts.jsonl public/data research/raw research/provider-cache research/prospective-protocol.json
           if git diff --cached --quiet; then
             echo "No research changes."
           else

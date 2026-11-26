@@ -78,6 +78,14 @@ On the same 430 historical months, the interaction candidate's AUC is **0.7848**
 
 All new hypotheses were developed after viewing the historical failures. Their chronological replay is **post-hoc exploration, not an untouched test**. Hash linking checks internal consistency; it does not provide independent timestamping, blockchain security, or tamper-proof certification. Read [the experiment, complete comparison, and prospective protocol](research/INNOVATION.md).
 
+## Can the next-year recession forecast be improved?
+
+Two trials address different sources of error. The first adds the six-month change in the Treasury term spread and the twelve-month change in the effective federal funds rate. The second keeps the original three-signal forecast and changes the base rate it is blended with. It gives equal weight to the model and the frequency of positive twelve-month forecast windows among the preceding 15 years of eligible issue months. Both trials predict whether **at least one of the twelve months following issuance is a recession month**. [Explore the forecast trials](https://horizon-macro-observatory.samel23.chatgpt.site/#forecast)
+
+In the November 2026 build, the rate-path blend scored **0.14319 Brier** over 430 mature issues and the recent-base blend scored **0.14078**. The existing 50/50 blend scored **0.14047**, with lower scores indicating smaller probability errors. From January 2016 onward, the recent-base blend improved on the existing blend (**0.16405 versus 0.17562**), while its 15-year historical frequency alone scored **0.11412**. This suggests that the choice of historical base rate deserves as much attention as adding another market signal. The page lets readers check sensitivity to omitting a two-year period and examine each forecast. [Download the annual replay](https://horizon-macro-observatory.samel23.chatgpt.site/api/download?file=ratepath)
+
+The current trial estimates and incumbent are also archived together at their first eligible capture in each issue month. Future scoring requires twelve observed recession labels. This archive has its own forecast records and research recipe. [Download the prospective trial receipts](https://horizon-macro-observatory.samel23.chatgpt.site/api/download?file=ratepathreceipts)
+
 ## What does a 21% forecast mean in practice?
 
 The November 2026 original estimate is 21.1% for December 2026 through November 2027. In the comparable historical replay, 48 original estimates fell in its 20–40% band. Their mean forecast was 27.4%, and 4 of the 48 forward windows contained a recession (8.3%). The windows overlap and the band spans a range of economic conditions. Its observed rate provides historical context for the current estimate. [Inspect the probability bands](https://horizon-macro-observatory.samel23.chatgpt.site/#calibration)
