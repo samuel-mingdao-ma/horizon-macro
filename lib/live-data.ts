@@ -219,6 +219,46 @@ export function validateResearchSnapshot(candidate: unknown, base: MacroSnapshot
       }
     }
   }
+  if (base.regimePrior) {
+    const trial = value.regimePrior;
+    const current = trial?.latest;
+    const probability = (p: unknown): p is number => typeof p === 'number' && p >= 0 && p <= 1;
+    const matches = (p: unknown, expected: number) => probability(p) && Math.abs(p - expected) < 1e-8;
+    if (!current || trial.spec?.id !== base.regimePrior.spec.id || current.issueDate !== latest.issueDate
+      || current.featureDate !== latest.featureDate || current.forecastStart !== latest.forecastStart
+      || current.forecastEnd !== latest.forecastEnd || !matches(current.originalProbability, latest.probability)
+      || !matches(current.fixedBlendProbability, (latest.probability + latest.baselineProbability) / 2)
+      || typeof current.available !== 'boolean' || !Array.isArray(trial.history)
+      || ![0, 120].includes(trial.metrics?.rolling120?.expectedCalendarMonths)
+      || !trial.metrics?.all?.models?.candidate || !trial.metrics?.rolling120?.models?.adaptive) {
+      throw new Error('Missing or inconsistent regime research');
+    }
+    if (current.available) {
+      const cell = current.stateMap?.find((row: {id: string}) => row.id === current.state);
+      const credit = Number(latest.features.credit.toFixed(10)), labor = Number(latest.features.labor.toFixed(10));
+      const state = (credit > 0 ? 'tight-' : 'loose-') + (labor >= .5 ? 'elevated' : 'low');
+      const pool = current.recentPriorProbability, alpha = current.regimeWeight;
+      if (!cell || current.state !== state || !probability(pool) || !probability(alpha)
+        || !Number.isInteger(cell.n) || !Number.isInteger(cell.positiveWindows)
+        || cell.n < 0 || cell.positiveWindows < 0 || cell.positiveWindows > cell.n
+        || !matches(current.dynamicPriorProbability, (cell.positiveWindows + 24 * pool) / (cell.n + 24))
+        || !matches(current.adaptivePriorProbability, pool + alpha * (current.dynamicPriorProbability - pool))
+        || !matches(current.probability, (latest.probability + current.dynamicPriorProbability) / 2)
+        || !matches(current.adaptiveProbability, (latest.probability + current.adaptivePriorProbability) / 2)) {
+        throw new Error('Invalid regime forecast or adaptive weight');
+      }
+    } else if (current.probability != null || current.adaptiveProbability != null) {
+      throw new Error('Unavailable regime forecast has a published probability');
+    }
+    const previous = base.regimePrior.prospective?.receipts;
+    if (previous?.length) {
+      const archive = trial.prospective;
+      if (!archive?.chainValid || !Array.isArray(archive.receipts) || archive.receiptCount !== archive.receipts.length
+        || previous.some((row: {hash: string}, i: number) => archive.receipts[i]?.hash !== row.hash)) {
+        throw new Error('Regime forecast record missing or regressive');
+      }
+    }
+  }
   if (base.prospective) {
     const archive=value.prospective;
     if (!archive || archive.protocolVersion!==base.prospective.protocolVersion || archive.chainValid!==true

@@ -153,3 +153,21 @@ test('refreshes retain the new trial and verify each published blend formula', a
   if (snapshot.ratePath.prospective?.receiptCount > 0)
     assert.throws(() => validateResearchSnapshot(empty, snapshot, now), /record missing or regressive/);
 });
+
+test('remote updates preserve regime records and reproduce the conditional and adaptive probabilities', async () => {
+  const {validateResearchSnapshot} = await import('../lib/live-data.ts');
+  const now = new Date(snapshot.meta.generatedAt);
+  const missing = structuredClone(snapshot);
+  delete missing.regimePrior;
+  assert.throws(() => validateResearchSnapshot(missing, snapshot, now), /regime research/);
+  for (const key of ['state', 'dynamicPriorProbability', 'adaptiveProbability']) {
+    const wrong = structuredClone(snapshot);
+    wrong.regimePrior.latest[key] = key === 'state' ? 'unknown' : null;
+    assert.throws(() => validateResearchSnapshot(wrong, snapshot, now), /regime forecast/);
+  }
+  if (snapshot.regimePrior.prospective?.receiptCount) {
+    const truncated = structuredClone(snapshot);
+    truncated.regimePrior.prospective.receipts = [];
+    assert.throws(() => validateResearchSnapshot(truncated, snapshot, now), /Regime forecast record/);
+  }
+});

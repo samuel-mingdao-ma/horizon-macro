@@ -186,6 +186,10 @@ October 2025 UNRATE and CPI observations are missing in the official source. The
 
 Read [the full methodology](research/METHODOLOGY.md), [Alarm Lab research](research/INNOVATION.md), and [source audit notes](research/source-notes.md) for formulas, exact clock conventions, failure analysis and attribution.
 
+## Economic-regime base rates
+
+Can a changing base rate improve the 12-month forecast? The regime trial keeps the original model at 50% and compares an expanding historical base with a recent credit-and-labor-conditioned base. The annual walk-forward replay reports errors on identical months across the full sample and latest ten years. Readers can inspect all four state counts, compare unconditioned and adaptive alternatives, and audit frozen forecasts as outcomes mature. [Open the experiment](https://horizon-macro-observatory.samel23.chatgpt.site/#regimes) · [Model design and initial results](research/INNOVATION.md#does-the-historical-base-rate-depend-on-the-economic-environment)
+
 ## Architecture and research files
 
 ```text

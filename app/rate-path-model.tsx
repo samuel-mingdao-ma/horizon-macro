@@ -684,6 +684,7 @@ export default function RatePathModel({ data }: { data: Snapshot }) {
           </div>
         )}
       </details>
+      <a className="rt-text-link" href="#regimes">Compare base rates by credit and labor conditions →</a>
     </div>
   );
 }
