@@ -171,3 +171,33 @@ test('remote updates preserve regime records and reproduce the conditional and a
     assert.throws(() => validateResearchSnapshot(truncated, snapshot, now), /Regime forecast record/);
   }
 });
+
+test('leading-indicator refresh preserves both the current comparisons and their common outcome months', async () => {
+  const {validateResearchSnapshot} = await import('../lib/live-data.ts');
+  const now = new Date(snapshot.meta.generatedAt);
+  for (const change of [
+    data => {delete data.leadingTrial;},
+    data => {data.leadingTrial.diagnostics.windows.all.n += 1;},
+    data => {data.leadingTrial.latest.existingBlendProbability = null;},
+  ]) {
+    const changed = structuredClone(snapshot);
+    change(changed);
+    assert.throws(() => validateResearchSnapshot(changed, snapshot, now), /leading-indicator/i);
+  }
+  if (snapshot.leadingTrial.latest.available) {
+    const changed = structuredClone(snapshot);
+    changed.leadingTrial.latest.permitsBlendProbability = null;
+    assert.throws(() => validateResearchSnapshot(changed, snapshot, now), /leading-indicator forecast/);
+    const unavailable = structuredClone(snapshot);
+    Object.assign(unavailable.leadingTrial.latest, {
+      available:false,probability:null,matchedThreeBlendProbability:null,permitsBlendProbability:null,
+      claimsBlendProbability:null,rawProbability:null,
+    });
+    assert.doesNotThrow(() => validateResearchSnapshot(unavailable, snapshot, now));
+  }
+  if (snapshot.leadingTrial.prospective?.receiptCount) {
+    const truncated = structuredClone(snapshot);
+    truncated.leadingTrial.prospective.receipts = [];
+    assert.throws(() => validateResearchSnapshot(truncated, snapshot, now), /record missing or regressive/);
+  }
+});

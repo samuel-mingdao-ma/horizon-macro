@@ -41,7 +41,9 @@ def validate_series(series, series_id):
         raise ValueError(f'{series_id}: invalid observation index')
     if series.dropna().empty:
         raise ValueError(f'{series_id}: no usable observations')
-    if series_id != 'NFCICREDIT' and any(series.index.day != 1):
+    if series_id == 'ICSA' and any(series.index.dayofweek != 5):
+        raise ValueError('ICSA: weekly observation dates must be Saturdays')
+    if series_id not in {'NFCICREDIT', 'ICSA'} and any(series.index.day != 1):
         raise ValueError(f'{series_id}: monthly observations must be month starts')
     return series
 

@@ -1,128 +1,150 @@
 {
-  "mode": "fred-api",
-  "checkedAt": "2026-11-26T18:56:10.839856+00:00",
+  "mode": "fred-direct",
+  "checkedAt": "2026-11-26T19:08:20.032834+00:00",
   "note": "All source observations downloaded directly from FRED. Labels remain available only through the published USREC cutoff.",
   "perSeries": {
-    "GS10": {
-      "mode": "fred-api",
-      "fetchedUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=GS10&file_type=json",
+    "PERMIT": {
+      "mode": "fred-direct",
+      "fetchedUrl": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=PERMIT",
       "lastDate": "2026-10-01",
       "verifiedProviderLastDate": "2026-10-01",
       "refreshed": true,
       "latestObservationFromCache": false,
-      "cacheOriginalRetrievedAt": "2026-11-26T03:36:47.049822+00:00",
-      "sourceRetrievedAt": "2026-11-26T18:56:10.839856+00:00",
-      "providerRetrievedAt": "2026-11-26T18:56:10.839856+00:00"
+      "cacheOriginalRetrievedAt": "2026-11-26T19:04:42.980833+00:00",
+      "sourceRetrievedAt": "2026-11-26T19:08:20.032834+00:00",
+      "providerRetrievedAt": "2026-11-26T19:08:20.032834+00:00"
+    },
+    "ICSA": {
+      "mode": "fred-direct",
+      "fetchedUrl": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=ICSA",
+      "lastDate": "2026-11-21",
+      "verifiedProviderLastDate": "2026-11-21",
+      "refreshed": true,
+      "latestObservationFromCache": false,
+      "cacheOriginalRetrievedAt": "2026-11-26T19:04:42.980833+00:00",
+      "sourceRetrievedAt": "2026-11-26T19:08:20.032834+00:00",
+      "providerRetrievedAt": "2026-11-26T19:08:20.032834+00:00"
+    },
+    "GS10": {
+      "mode": "fred-direct",
+      "fetchedUrl": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=GS10",
+      "lastDate": "2026-10-01",
+      "verifiedProviderLastDate": "2026-10-01",
+      "refreshed": true,
+      "latestObservationFromCache": false,
+      "cacheOriginalRetrievedAt": "2026-11-26T19:04:42.980833+00:00",
+      "sourceRetrievedAt": "2026-11-26T19:08:20.032834+00:00",
+      "providerRetrievedAt": "2026-11-26T19:08:20.032834+00:00"
     },
     "TB3MS": {
-      "mode": "fred-api",
-      "fetchedUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=TB3MS&file_type=json",
+      "mode": "fred-direct",
+      "fetchedUrl": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=TB3MS",
       "lastDate": "2026-10-01",
       "verifiedProviderLastDate": "2026-10-01",
       "refreshed": true,
       "latestObservationFromCache": false,
-      "cacheOriginalRetrievedAt": "2026-11-26T03:36:47.049822+00:00",
-      "sourceRetrievedAt": "2026-11-26T18:56:10.839856+00:00",
-      "providerRetrievedAt": "2026-11-26T18:56:10.839856+00:00"
+      "cacheOriginalRetrievedAt": "2026-11-26T19:04:42.980833+00:00",
+      "sourceRetrievedAt": "2026-11-26T19:08:20.032834+00:00",
+      "providerRetrievedAt": "2026-11-26T19:08:20.032834+00:00"
     },
     "NFCICREDIT": {
-      "mode": "fred-api",
-      "fetchedUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=NFCICREDIT&file_type=json",
+      "mode": "fred-direct",
+      "fetchedUrl": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=NFCICREDIT",
       "lastDate": "2026-11-20",
       "verifiedProviderLastDate": "2026-11-20",
       "refreshed": true,
       "latestObservationFromCache": false,
-      "cacheOriginalRetrievedAt": "2026-11-26T03:36:47.049822+00:00",
-      "sourceRetrievedAt": "2026-11-26T18:56:10.839856+00:00",
-      "providerRetrievedAt": "2026-11-26T18:56:10.839856+00:00"
+      "cacheOriginalRetrievedAt": "2026-11-26T19:04:42.980833+00:00",
+      "sourceRetrievedAt": "2026-11-26T19:08:20.032834+00:00",
+      "providerRetrievedAt": "2026-11-26T19:08:20.032834+00:00"
     },
     "UNRATE": {
-      "mode": "fred-api",
-      "fetchedUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=UNRATE&file_type=json",
+      "mode": "fred-direct",
+      "fetchedUrl": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=UNRATE",
       "lastDate": "2026-10-01",
       "verifiedProviderLastDate": "2026-10-01",
       "refreshed": true,
       "latestObservationFromCache": false,
-      "cacheOriginalRetrievedAt": "2026-11-26T03:36:47.049822+00:00",
-      "sourceRetrievedAt": "2026-11-26T18:56:10.839856+00:00",
-      "providerRetrievedAt": "2026-11-26T18:56:10.839856+00:00"
+      "cacheOriginalRetrievedAt": "2026-11-26T19:04:42.980833+00:00",
+      "sourceRetrievedAt": "2026-11-26T19:08:20.032834+00:00",
+      "providerRetrievedAt": "2026-11-26T19:08:20.032834+00:00"
     },
     "USREC": {
-      "mode": "fred-api",
-      "fetchedUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=USREC&file_type=json",
+      "mode": "fred-direct",
+      "fetchedUrl": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=USREC",
       "lastDate": "2026-10-01",
       "verifiedProviderLastDate": "2026-10-01",
       "refreshed": true,
       "latestObservationFromCache": false,
-      "cacheOriginalRetrievedAt": "2026-11-26T03:36:47.049822+00:00",
-      "sourceRetrievedAt": "2026-11-26T18:56:10.839856+00:00",
-      "providerRetrievedAt": "2026-11-26T18:56:10.839856+00:00"
+      "cacheOriginalRetrievedAt": "2026-11-26T19:04:42.980833+00:00",
+      "sourceRetrievedAt": "2026-11-26T19:08:20.032834+00:00",
+      "providerRetrievedAt": "2026-11-26T19:08:20.032834+00:00"
     },
     "CPIAUCSL": {
-      "mode": "fred-api",
-      "fetchedUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=CPIAUCSL&file_type=json",
+      "mode": "fred-direct",
+      "fetchedUrl": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPIAUCSL",
       "lastDate": "2026-10-01",
       "verifiedProviderLastDate": "2026-10-01",
       "refreshed": true,
       "latestObservationFromCache": false,
-      "cacheOriginalRetrievedAt": "2026-11-26T03:36:47.049822+00:00",
-      "sourceRetrievedAt": "2026-11-26T18:56:10.839856+00:00",
-      "providerRetrievedAt": "2026-11-26T18:56:10.839856+00:00"
+      "cacheOriginalRetrievedAt": "2026-11-26T19:04:42.980833+00:00",
+      "sourceRetrievedAt": "2026-11-26T19:08:20.032834+00:00",
+      "providerRetrievedAt": "2026-11-26T19:08:20.032834+00:00"
     },
     "FEDFUNDS": {
-      "mode": "fred-api",
-      "fetchedUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=FEDFUNDS&file_type=json",
+      "mode": "fred-direct",
+      "fetchedUrl": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=FEDFUNDS",
       "lastDate": "2026-10-01",
       "verifiedProviderLastDate": "2026-10-01",
       "refreshed": true,
       "latestObservationFromCache": false,
-      "cacheOriginalRetrievedAt": "2026-11-26T03:36:47.049822+00:00",
-      "sourceRetrievedAt": "2026-11-26T18:56:10.839856+00:00",
-      "providerRetrievedAt": "2026-11-26T18:56:10.839856+00:00"
+      "cacheOriginalRetrievedAt": "2026-11-26T19:04:42.980833+00:00",
+      "sourceRetrievedAt": "2026-11-26T19:08:20.032834+00:00",
+      "providerRetrievedAt": "2026-11-26T19:08:20.032834+00:00"
     },
     "GS1": {
-      "mode": "fred-api",
-      "fetchedUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=GS1&file_type=json",
+      "mode": "fred-direct",
+      "fetchedUrl": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=GS1",
       "lastDate": "2026-10-01",
       "verifiedProviderLastDate": "2026-10-01",
       "refreshed": true,
       "latestObservationFromCache": false,
-      "cacheOriginalRetrievedAt": "2026-11-26T03:36:47.049822+00:00",
-      "sourceRetrievedAt": "2026-11-26T18:56:10.839856+00:00",
-      "providerRetrievedAt": "2026-11-26T18:56:10.839856+00:00"
+      "cacheOriginalRetrievedAt": "2026-11-26T19:04:42.980833+00:00",
+      "sourceRetrievedAt": "2026-11-26T19:08:20.032834+00:00",
+      "providerRetrievedAt": "2026-11-26T19:08:20.032834+00:00"
     },
     "GS2": {
-      "mode": "fred-api",
-      "fetchedUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=GS2&file_type=json",
+      "mode": "fred-direct",
+      "fetchedUrl": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=GS2",
       "lastDate": "2026-10-01",
       "verifiedProviderLastDate": "2026-10-01",
       "refreshed": true,
       "latestObservationFromCache": false,
-      "cacheOriginalRetrievedAt": "2026-11-26T03:36:47.049822+00:00",
-      "sourceRetrievedAt": "2026-11-26T18:56:10.839856+00:00",
-      "providerRetrievedAt": "2026-11-26T18:56:10.839856+00:00"
+      "cacheOriginalRetrievedAt": "2026-11-26T19:04:42.980833+00:00",
+      "sourceRetrievedAt": "2026-11-26T19:08:20.032834+00:00",
+      "providerRetrievedAt": "2026-11-26T19:08:20.032834+00:00"
     },
     "GS5": {
-      "mode": "fred-api",
-      "fetchedUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=GS5&file_type=json",
+      "mode": "fred-direct",
+      "fetchedUrl": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=GS5",
       "lastDate": "2026-10-01",
       "verifiedProviderLastDate": "2026-10-01",
       "refreshed": true,
       "latestObservationFromCache": false,
-      "cacheOriginalRetrievedAt": "2026-11-26T03:36:47.049822+00:00",
-      "sourceRetrievedAt": "2026-11-26T18:56:10.839856+00:00",
-      "providerRetrievedAt": "2026-11-26T18:56:10.839856+00:00"
+      "cacheOriginalRetrievedAt": "2026-11-26T19:04:42.980833+00:00",
+      "sourceRetrievedAt": "2026-11-26T19:08:20.032834+00:00",
+      "providerRetrievedAt": "2026-11-26T19:08:20.032834+00:00"
     },
     "GS30": {
-      "mode": "fred-api",
-      "fetchedUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=GS30&file_type=json",
+      "mode": "fred-direct",
+      "fetchedUrl": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=GS30",
       "lastDate": "2026-10-01",
       "verifiedProviderLastDate": "2026-10-01",
       "refreshed": true,
       "latestObservationFromCache": false,
-      "cacheOriginalRetrievedAt": "2026-11-26T03:36:47.049822+00:00",
-      "sourceRetrievedAt": "2026-11-26T18:56:10.839856+00:00",
-      "providerRetrievedAt": "2026-11-26T18:56:10.839856+00:00"
+      "cacheOriginalRetrievedAt": "2026-11-26T19:04:42.980833+00:00",
+      "sourceRetrievedAt": "2026-11-26T19:08:20.032834+00:00",
+      "providerRetrievedAt": "2026-11-26T19:08:20.032834+00:00"
     }
   }
 }

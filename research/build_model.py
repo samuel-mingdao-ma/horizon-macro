@@ -20,11 +20,15 @@ from provider_fallback import parse_fred_csv, fallback_dataset, previous_provena
 from innovation import build_innovation
 from rate_path import build_rate_path
 from regime_prior import build_regime_prior
+from leading_trial import build_leading_trial
+from onset_diagnostics import build_onset_diagnostics
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW = ROOT / 'research' / 'raw'
 FEATURES = ['slope', 'credit', 'labor']
 SERIES = {
+ 'PERMIT': ('New privately owned housing units authorized by building permits', 'Monthly', 'thousands of units, seasonally adjusted annual rate', 'U.S. Census Bureau and U.S. Department of Housing and Urban Development'),
+ 'ICSA': ('Initial unemployment insurance claims', 'Weekly, ending Saturday', 'claims, seasonally adjusted', 'U.S. Employment and Training Administration'),
  'GS10': ('10-year Treasury yield', 'Monthly', 'percent', 'Board of Governors of the Federal Reserve System'),
  'TB3MS': ('3-month Treasury bill rate', 'Monthly', 'percent, discount basis', 'Board of Governors of the Federal Reserve System'),
  'NFCICREDIT': ('Chicago Fed NFCI credit subindex', 'Weekly', 'index, standard deviations', 'Federal Reserve Bank of Chicago'),
@@ -113,18 +117,29 @@ def load_dataset(refresh):
                 successful[key] = values
             except Exception as error:
                 errors[series_id] = type(error).__name__
-    if errors:
+    # Optional trial feeds may lag independently of the original data providers.
+    # Keep the original observation and retrieval dates when reusing their cache.
+    optional_cache = {s for s in errors if s in {'PERMIT', 'ICSA'} and s in cached}
+    if errors.keys() - optional_cache:
         raw, metadata = fallback_dataset(cached, original, direct_success=successful,
             checked_at=checked_at, cache_dir=ROOT / 'research' / 'provider-cache')
         metadata['directFredErrors'] = errors
     else:
-        raw = successful
+        raw = {**successful, **{s: cached[s] for s in optional_cache}}
         metadata = dict(mode='fred-direct', checkedAt=checked_at,
             note='All source observations downloaded directly from FRED. Labels remain available only through the published USREC cutoff.',
             perSeries={s: dict(mode='fred-direct', fetchedUrl=f'https://fred.stlouisfed.org/graph/fredgraph.csv?id={s}',
                 lastDate=last_date(raw[s]), verifiedProviderLastDate=last_date(raw[s]), refreshed=True,
                 latestObservationFromCache=False, cacheOriginalRetrievedAt=original.get(s, {}).get('sourceRetrievedAt'),
                 sourceRetrievedAt=checked_at, providerRetrievedAt=checked_at) for s in SERIES})
+    if optional_cache and not errors.keys() - optional_cache:
+        for series_id in optional_cache:
+            previous = original.get(series_id, {})
+            metadata['perSeries'][series_id].update(mode='dated-cache', fetchedUrl=None, refreshed=False,
+                latestObservationFromCache=True, verifiedProviderLastDate=previous.get('verifiedProviderLastDate'),
+                sourceRetrievedAt=previous.get('sourceRetrievedAt'), providerRetrievedAt=None)
+        metadata.update(mode='mixed-direct-and-cache', directFredErrors=errors,
+            note='The original series refreshed directly. A leading-indicator feed retained its dated source cache.')
     for series_id, transport in direct_transports.items():
         if series_id in successful:
             metadata['perSeries'][series_id].update(transport)
@@ -143,6 +158,19 @@ def load_dataset(refresh):
     cache_dir.mkdir(parents=True, exist_ok=True)
     (cache_dir / 'provenance.json').write_text(json.dumps(metadata, indent=2))
     return raw, metadata
+
+
+def complete_monthly_claims(values, asof_month):
+    """Seasonally adjusted weekly level, averaged only across a complete set of Saturdays."""
+    values = values.loc[values.index < asof_month].sort_index()
+    if values.empty:
+        return pd.Series(dtype=float, index=pd.DatetimeIndex([]), name='ICSA')
+    dates = pd.date_range(values.index.min().to_period('M').start_time, asof_month - pd.Timedelta(days=1),
+                          freq='W-SAT')
+    by_month = values.reindex(dates).groupby(dates.to_period('M'))
+    mean = by_month.mean().where(by_month.count() == by_month.size())
+    mean.index = mean.index.to_timestamp()
+    return mean
 
 
 def sigmoid(x):
@@ -247,7 +275,9 @@ def main():
     data_refresh['lastAvailableObservation'] = {s: last_date(v) for s, v in raw.items()}
     monthly = {}
     for s, v in raw.items():
-        if s == 'NFCICREDIT':
+        if s == 'ICSA':
+            monthly[s] = complete_monthly_claims(v, asof_month)
+        elif s == 'NFCICREDIT':
             agg = v.groupby(v.index.to_period('M')).mean()
             agg.index = agg.index.to_timestamp()
             monthly[s] = agg.loc[agg.index < asof_month]
@@ -390,6 +420,9 @@ def main():
     snapshot['ratePath'] = build_rate_path(panel, source, history_frame, latest, fit_logit, score, metrics,
         generated_at=snapshot['meta']['generatedAt'])
     snapshot['regimePrior'] = build_regime_prior(panel, history_frame, latest, metrics)
+    leading = build_leading_trial(panel, source, history_frame, latest, fit_logit, score, metrics)
+    leading['diagnostics'] = build_onset_diagnostics(leading['history'], raw['USREC'], leading['metrics'])
+    snapshot['leadingTrial'] = leading
     # A compact panel with observation-month sources and issue-month lagged inputs.
     download=panel.copy()
     download.index.name='issue_date'
@@ -406,6 +439,8 @@ def main():
         ROOT / 'public' / 'data' / 'rate-path.csv', index=False, float_format='%.12f')
     pd.DataFrame(snapshot['regimePrior']['history']).to_csv(
         ROOT / 'public' / 'data' / 'regime-prior.csv', index=False, float_format='%.12f')
+    pd.DataFrame(leading['history']).to_csv(ROOT / 'public' / 'data' / 'leading-indicators.csv',
+        index=False, float_format='%.12f')
     # Audit trail records the full fold boundary data separately for review.
     (ROOT/'research'/'folds.json').write_text(json.dumps(clean(folds),indent=2))
     print(json.dumps(clean(dict(latest=latest,metrics=evaluation,sensitivity=sensitivity,model=final_model,historyN=len(history))),indent=2))

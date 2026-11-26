@@ -259,6 +259,55 @@ export function validateResearchSnapshot(candidate: unknown, base: MacroSnapshot
       }
     }
   }
+  if (base.leadingTrial) {
+    const trial = value.leadingTrial, current = trial?.latest;
+    const sameProbability = (p: unknown, q: number) => typeof p === 'number' && p >= 0 && p <= 1 && Math.abs(p - q) < 1e-8;
+    if (!current || trial.spec?.id !== base.leadingTrial.spec.id || current.issueDate !== latest.issueDate
+      || current.featureDate !== latest.featureDate || current.forecastStart !== latest.forecastStart
+      || current.forecastEnd !== latest.forecastEnd || !sameProbability(current.originalProbability, latest.probability)
+      || !sameProbability(current.baselineProbability, latest.baselineProbability)
+      || !sameProbability(current.existingBlendProbability, (latest.probability + latest.baselineProbability) / 2)
+      || !Array.isArray(trial.history) || !Array.isArray(trial.diagnostics?.episodes)) {
+      throw new Error('Missing or inconsistent leading-indicator research');
+    }
+    const columns = {
+      joint: ['slope','credit','labor','permitGrowth6','claimsGrowth12'],
+      permits: ['slope','credit','labor','permitGrowth6'], claims: ['slope','credit','labor','claimsGrowth12'],
+      matchedThree: ['slope','credit','labor'],
+    };
+    const fields = {joint:'probability', permits:'permitsBlendProbability', claims:'claimsBlendProbability', matchedThree:'matchedThreeBlendProbability'};
+    if (current.available === true) {
+      for (const name of Object.keys(columns) as (keyof typeof columns)[]) {
+        const model = trial.currentModels?.[name], keys = columns[name];
+        if (!model || JSON.stringify(model.featureOrder) !== JSON.stringify(keys)
+          || !keys.every(k => Number.isFinite(current.features?.[k]))
+          || !Number.isFinite(model.intercept) || model.refitDate !== current.issueDate
+          || !isMonth(model.lastTargetMonth) || model.lastTargetMonth >= current.issueDate
+          || !['means','scales','coefficients'].every(k => Array.isArray(model[k]) && model[k].length === keys.length && model[k].every(Number.isFinite))
+          || model.scales.some((n:number) => n <= 0)) throw new Error('Invalid leading-indicator parameters');
+        const raw = score(current.features, model).probability;
+        if (!sameProbability(current[fields[name]], (raw + latest.baselineProbability) / 2)
+          || (name === 'joint' && !sameProbability(current.rawProbability, raw))) throw new Error('Invalid leading-indicator forecast');
+      }
+    } else if (current.available !== false || current.rawProbability != null || Object.values(fields).some(key => current[key] != null)) {
+      throw new Error('Incomplete leading-indicator forecast');
+    }
+    for (const name of ['all', 'rolling120']) {
+      const sample = trial.metrics?.[name];
+      if (!Number.isInteger(sample?.n) || sample.n !== trial.diagnostics.windows?.[name]?.n
+        || !sample.models?.existingBlend || !sample.models?.permitsBlend || !sample.models?.candidate) {
+        throw new Error('Inconsistent leading-indicator evaluation months');
+      }
+    }
+    const previous = base.leadingTrial.prospective?.receipts;
+    if (previous?.length) {
+      const archive = trial.prospective;
+      if (!archive?.chainValid || !Array.isArray(archive.receipts) || archive.receiptCount !== archive.receipts.length
+        || previous.some((row:{hash:string}, i:number) => archive.receipts[i]?.hash !== row.hash)) {
+        throw new Error('Leading-indicator forecast record missing or regressive');
+      }
+    }
+  }
   if (base.prospective) {
     const archive=value.prospective;
     if (!archive || archive.protocolVersion!==base.prospective.protocolVersion || archive.chainValid!==true

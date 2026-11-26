@@ -6,6 +6,8 @@ const files = {
   panel: {path:'panel.csv',type:'text/csv; charset=utf-8'},
   predictions: {path:'predictions.csv',type:'text/csv; charset=utf-8'},
   audit: {path:'alarm-audit.csv',type:'text/csv; charset=utf-8'},
+  leading: {path:'leading-indicators.csv',type:'text/csv; charset=utf-8'},
+  leadingreceipts: {path:'leading-receipts.jsonl',type:'application/x-ndjson; charset=utf-8'},
   regimes: {path:'regime-prior.csv',type:'text/csv; charset=utf-8'},
   regimereceipts: {path:'regime-receipts.jsonl',type:'application/x-ndjson; charset=utf-8'},
   ratepath: {path:'rate-path.csv',type:'text/csv; charset=utf-8'},
@@ -39,5 +41,5 @@ export async function GET(request: Request) {
     }catch{/* Bundled, dated downloads remain available if the remote source fails. */}
     return Response.redirect(new URL(`/data/${entry.path}`,request.url),303);
   }
-  return Response.json({error:'Choose snapshot, panel, predictions, audit, probability, ledger, ratepath, ratepathreceipts, regimes, or regimereceipts.'},{status:400});
+  return Response.json({error:'Choose snapshot, panel, predictions, audit, probability, ledger, ratepath, ratepathreceipts, regimes, regimereceipts, leading, or leadingreceipts.'},{status:400});
 }

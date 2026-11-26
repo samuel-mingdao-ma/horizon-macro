@@ -186,6 +186,10 @@ October 2025 UNRATE and CPI observations are missing in the official source. The
 
 Read [the full methodology](research/METHODOLOGY.md), [Alarm Lab research](research/INNOVATION.md), and [source audit notes](research/source-notes.md) for formulas, exact clock conventions, failure analysis and attribution.
 
+## Early warning from building permits and initial claims
+
+The Before recession view traces each forecast back to the signals available two months earlier. It compares housing permits and initial unemployment claims against the existing 50/50 forecast using exactly the same months, historical base probability, model penalty and target. The page separates forecasts issued before recession onset from those issued during a recession, and shows calibration across all expansion issues. [Open the leading-indicator trial](https://horizon-macro-observatory.samel23.chatgpt.site/#leading) · [Read the evidence](research/INNOVATION.md#what-was-visible-before-recession-onset) · [Issue-level CSV](https://horizon-macro-observatory.samel23.chatgpt.site/api/download?file=leading)
+
 ## Economic-regime base rates
 
 Can a changing base rate improve the 12-month forecast? The regime trial keeps the original model at 50% and compares an expanding historical base with a recent credit-and-labor-conditioned base. The annual walk-forward replay reports errors on identical months across the full sample and latest ten years. Readers can inspect all four state counts, compare unconditioned and adaptive alternatives, and audit frozen forecasts as outcomes mature. [Open the experiment](https://horizon-macro-observatory.samel23.chatgpt.site/#regimes) · [Model design and initial results](research/INNOVATION.md#does-the-historical-base-rate-depend-on-the-economic-environment)

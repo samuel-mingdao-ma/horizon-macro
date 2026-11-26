@@ -1,3 +1,4 @@
+import type { LeadingTrial } from './leading-types';
 import type { RegimePriorSnapshot } from './regime-prior-types';
 import type { RatePathSnapshot } from './rate-path-types';
 import type { ProspectiveSummary } from './ledger-types';
@@ -6,6 +7,7 @@ export type FeatureKey = 'slope'|'credit'|'labor';
 export type HistoryRow = {date:string;probability:number;baseline:number;curveProbability:number|null;target:number|null;recession:number;slope:number;credit:number;labor:number;featureDate:string};
 export type ModelMetrics = {auc:number;brier:number;logLoss:number};
 export type Snapshot = {
+ leadingTrial?: LeadingTrial;
  regimePrior?: RegimePriorSnapshot;
  ratePath?: RatePathSnapshot;
  innovation?: InnovationSnapshot;
