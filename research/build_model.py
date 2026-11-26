@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 import requests
 from provider_fallback import parse_fred_csv, fallback_dataset, previous_provenance, last_date
+from innovation import build_innovation
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW = ROOT / 'research' / 'raw'
@@ -382,6 +383,8 @@ def main():
                    'The target includes both new recessions and continuation of an existing recession, not recession onset alone.',
                    'Probabilities are model estimates, not certainty or investment advice; stress scenarios are conditional sensitivities, not causal forecasts.'
                   ])
+    snapshot['innovation'] = build_innovation(panel, history_frame, latest, fit_logit, score, metrics,
+        generated_at=snapshot['meta']['generatedAt'])
     # A compact panel with observation-month sources and issue-month lagged inputs.
     download=panel.copy()
     download.index.name='issue_date'
@@ -393,6 +396,7 @@ def main():
     (ROOT/'public'/'data'/'snapshot.json').write_text(payload)
     download.to_csv(ROOT/'public'/'data'/'panel.csv',float_format='%.8f')
     history_frame.to_csv(ROOT/'public'/'data'/'predictions.csv',float_format='%.8f')
+    pd.DataFrame(snapshot['innovation']['history']).to_csv(ROOT/'public'/'data'/'alarm-audit.csv',index=False,float_format='%.10f')
     # Audit trail records the full fold boundary data separately for review.
     (ROOT/'research'/'folds.json').write_text(json.dumps(clean(folds),indent=2))
     print(json.dumps(clean(dict(latest=latest,metrics=evaluation,sensitivity=sensitivity,model=final_model,historyN=len(history))),indent=2))

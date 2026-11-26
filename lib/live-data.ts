@@ -177,6 +177,29 @@ export function validateResearchSnapshot(candidate: unknown, base: MacroSnapshot
   if (!['history', 'sources', 'yieldCurve', 'calibration', 'recessions'].every(key => Array.isArray(value[key]))
     || !value.metrics || !Number.isFinite(value.metrics.n) || !Number.isFinite(value.metrics.model?.brier)
     || !latest.indicators || !Array.isArray(latest.contributions)) throw new Error('Incomplete research payload');
+  if (base.innovation) {
+    const audit=value.innovation;
+    const order=['slope','credit','labor','interaction'];
+    if (!audit || audit.version!==base.innovation.version || audit.issueDate!==meta.issueDate || audit.featureDate!==meta.featureDate
+      || !audit.latest?.features || !audit.model || JSON.stringify(audit.model.featureOrder)!==JSON.stringify(order)
+      || !['means','scales','coefficients'].every(key=>Array.isArray(audit.model[key])&&audit.model[key].length===4&&audit.model[key].every((n:unknown)=>typeof n==='number'&&Number.isFinite(n)))
+      || audit.model.scales.some((n:number)=>n<=0) || !Number.isFinite(audit.model.intercept)
+      || !order.every(key=>Number.isFinite(audit.latest.features[key])) || !Array.isArray(audit.history)
+      || audit.metrics?.n!==value.metrics.n || !Number.isFinite(audit.metrics?.challenger?.brier)) throw new Error('Missing or inconsistent alarm audit');
+    const f=audit.latest.features;
+    if (Math.abs(f.interaction-Math.max(-f.slope,0)*f.credit)>1e-8
+      || keys.some(key=>Math.abs(f[key]-latest.features[key])>1e-8)
+      || Math.abs(audit.latest.originalProbability-latest.probability)>1e-8
+      || Math.abs(score(f,audit.model).probability-audit.latest.probability)>1e-8) throw new Error('Alarm audit probability or interaction mismatch');
+  }
+  if (base.prospective) {
+    const archive=value.prospective;
+    if (!archive || archive.protocolVersion!==base.prospective.protocolVersion || archive.chainValid!==true
+      || !Array.isArray(archive.receipts) || archive.receiptCount!==archive.receipts.length || archive.receiptCount<1
+      || !archive.latestReceipt || archive.latestReceipt.issueDate>meta.issueDate
+      || !/^[a-f0-9]{64}$/.test(archive.lastHash??'') || archive.lastHash!==archive.latestReceipt.hash
+      || !Array.isArray(archive.outcomes) || archive.maturedCount<0 || archive.maturedCount>archive.receiptCount) throw new Error('Missing or inconsistent forecast archive');
+  }
   return value;
 }
 

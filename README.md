@@ -4,7 +4,7 @@
 
 An updating quantitative research website that asks: **What do the Treasury curve, credit conditions and labor momentum imply about the chance of at least one U.S. recession month in the next twelve months?**
 
-HORIZON combines public Federal Reserve data, an interpretable logistic model, chronological validation, scenario analysis and transparent research downloads. It is a student research project, not an official Federal Reserve forecast. The website is publicly accessible; its source and refresh history are available on GitHub.
+HORIZON combines public Federal Reserve data, interpretable models, chronological validation, an interactive **Alarm Lab**, and frozen prospective forecast receipts. Its central finding is useful precisely because the proposed credit interaction did not cure the historical false alarm. It is a student research project, not an official Federal Reserve forecast. The website is publicly accessible; its source and refresh history are available on GitHub.
 
 ## What the project demonstrates
 
@@ -12,6 +12,9 @@ HORIZON combines public Federal Reserve data, an interpretable logistic model, c
 - Direct FRED ingestion, observation-date discipline, missing-data handling and a visible fallback when live retrieval fails.
 - Training-only standardization, expanding-window estimation and separation of training/test target windows.
 - Comparison with a curve-only model and an expanding historical base rate.
+- An exploratory curve–credit interaction, a conditional risk surface with historical support counts, and explicit attempts to falsify a proposed improvement.
+- Decision-cost comparisons that expose the price of demanding credit/labor confirmation.
+- Frozen monthly forecasts with actual capture timestamps, model/input hashes, separate outcome scoring, and no retrospective filling of missed months.
 - Honest interpretation of discrimination, calibration, model failure and conditional sensitivities.
 - A React/Vinext interface and Cloudflare Worker API, with downloadable research artifacts.
 
@@ -30,6 +33,19 @@ Evaluation uses 430 mature monthly forecast issues, January 1990–October 2025,
 The model improves ranking relative to the curve-only comparator but **does not beat the base rate on probability error**. AUC 0.7822 does not mean 78.22% accuracy. A major failure was July 2023: a 96.675% estimate for August 2023–July 2024, while the currently published recession target is zero. This false alarm is retained and explained.
 
 An **exploratory, post-hoc 50/50 blend** of the model and each fold's historical base rate has AUC 0.7665, Brier 0.14047 and log loss 0.44630 on those same 430 months. It illustrates a shrinkage hypothesis, but was proposed after viewing the test results and is **not independently validated**. It does not replace the production headline; future-vintage or untouched-period evaluation is required.
+
+## Alarm Lab: the innovation and its result
+
+The lab asks: **Does requiring credit or labor confirmation make a yield-curve alarm more useful?** It combines a testable statistical hypothesis with a decision audit and a prospective record. This is an original project workflow, not a claim to a new forecasting method.
+
+- **Conditional surface:** add `max(−curve slope, 0) × credit` to the original three inputs; inspect fitted risk while holding labor fixed. The signed interaction coefficient is estimated freely. Historical input dots and nearby-month counts expose weak support; they do not quantify uncertainty or establish causality.
+- **Failure replay:** compare the financial crisis, pandemic, and 2023 false alarm. In July 2023, the interaction candidate still assigned **95.84%** to a horizon whose realized recession target was zero, versus **96.68%** originally.
+- **Decision costs:** choose a missed-warning/false-alarm cost ratio and inspect counts on the same mature months. At ratio **3**, the illustrative threshold is **25%**. The curve-confirmation gate reduces false alarms from **152 to 56**, but raises missed positive windows from **18 to 35**, relative to the curve alone. Overlapping months are not independent decisions or trades.
+- **Prospective receipts:** the first published receipt covers **December 2026–November 2027**. Its `recordedAt` field preserves the actual capture timestamp; consult the receipt for the precise time rather than treating its issue month as a timestamp. The initial ledger has **one receipt and zero matured outcomes**. It freezes the original, interaction, historical-base-rate, and exploratory blend forecasts. No prospective performance has been established.
+
+On the same 430 historical months, the interaction candidate's AUC is **0.7848**, Brier **0.16889**, and log loss **0.55942**. Its small Brier improvement over the original **0.17045** still trails the base rate's **0.16057**. The 50/50 blend's better historical Brier does not make it the best rule under every decision cost: at ratio 3, its penalty per month is **0.3930**, versus **0.3744** for the original and **0.3651** for the interaction candidate.
+
+All new hypotheses were developed after viewing the historical failures. Their chronological replay is **post-hoc exploration, not an untouched test**. Hash linking checks internal consistency; it does not provide independent timestamping, blockchain security, or tamper-proof certification. Read [the experiment, complete comparison, and prospective protocol](research/INNOVATION.md).
 
 ## Run locally
 
@@ -60,8 +76,11 @@ npm start
 ```sh
 python3 -m pip install numpy==2.1.3 pandas==2.2.3 requests==2.32.3
 python3 research/build_model.py --refresh
+python3 research/forecast_ledger.py
 python3 research/test_model.py
-node --test scripts/refresh-data.test.mjs
+python3 research/test_innovation.py
+python3 research/test_forecast_ledger.py
+node --test scripts/refresh-data.test.mjs scripts/refresh-data.bond.test.mjs
 ```
 
 For an offline reconstruction using the saved raw observations:
@@ -70,7 +89,7 @@ For an offline reconstruction using the saved raw observations:
 python3 research/build_model.py --offline --as-of 2026-11-25
 ```
 
-The Python tests verify target timing, unavailable future labels, training eligibility, training-only scaling, equivalent scoring/decomposition, numerical estimation, credit aggregation and missing labor observations. The Node tests verify Python/JavaScript parity and live-inference behavior. Neither test suite establishes predictive profitability.
+The final publication checks passed **36 Python tests, 15 Node tests, and TypeScript checking**. The Python tests verify target timing, unavailable future labels, training eligibility, training-only scaling, equivalent scoring/decomposition, numerical estimation, credit aggregation and missing labor observations. Additional checks recompute candidate metrics, fixed case subsets, confirmation rules, surface support, receipt hash integrity, and separate outcome maturation. The Node tests verify Python/JavaScript parity and live-inference behavior. Neither test suite establishes predictive profitability.
 
 ## How updates work
 
@@ -78,7 +97,7 @@ The public portfolio repository is [samuel-mingdao-ma/horizon-macro](https://git
 
 | Path | Behavior |
 | --- | --- |
-| GitHub Actions research refresh | Fetches full FRED history, refits the model, recomputes chronological validation, runs Python/JavaScript checks, and commits the verified artifacts at **18:30 UTC each weekday**. Manual workflow runs are supported. |
+| GitHub Actions research refresh | Fetches full FRED history, refits the models, recomputes chronological validation, freezes the first successful capture of each new issue month, evaluates previously frozen outcomes separately, runs Python/JavaScript checks, and commits the verified artifacts at **18:30 UTC each weekday**. Manual workflow runs are supported. |
 | Production `/api/macro` | Checks the repository's published research snapshot with a one-hour cache. It validates dates, model parameters, and scoring before serving it. Updated data and model coefficients therefore reach the hosted website without a source redeploy. If GitHub is unavailable, it tries direct FRED scoring, then retains a clearly dated fallback. |
 
 When cloud access to the FRED graph download is unavailable, the pipeline verifies the same core level series using the official [FRED-MD release](https://www.stlouisfed.org/research/economists/mccracken/fred-databases) and [Chicago Fed credit CSV](https://api.data.chicagofed.org/NFCI/nfci-data-series-csv.csv). It preserves later cached observations, retains dated USREC/unsupported-tenor caches, and never invents new recession labels. Evaluation can therefore remain at its last known label cutoff while current signals advance. `meta.dataRefresh.perSeries` records retrieval and cache provenance; original fallback responses are retained in `research/provider-cache/`.
@@ -114,17 +133,25 @@ This is a **latest-vintage historical simulation**, not a historical real-time v
 
 October 2025 UNRATE and CPI observations are missing in the official source. The available-observation labor policy handles the former explicitly; October 2026 CPI year-over-year inflation cannot be computed from a missing year-ago denominator, so the latest valid inflation value retains its own date.
 
-Read [the full methodology](research/METHODOLOGY.md) and [source audit notes](research/source-notes.md) for formulas, exact clock conventions, failure analysis and attribution.
+Read [the full methodology](research/METHODOLOGY.md), [Alarm Lab research](research/INNOVATION.md), and [source audit notes](research/source-notes.md) for formulas, exact clock conventions, failure analysis and attribution.
 
 ## Architecture and research files
 
 ```text
-app/page.tsx                 research interface and interactions
+app/page.tsx                 server entry and initial research snapshot
+app/dashboard.tsx            navigation and original research views
+app/alarm-lab.tsx            conditional surface, cases, costs and receipt UI
 app/api/macro/route.ts       live snapshot endpoint
 app/api/download/route.ts    JSON/CSV download endpoints
 lib/live-data.ts             FRED parsing, alignment, scoring and fallback
 research/build_model.py     full-history estimation and validation
 research/test_model.py      quantitative invariants
+research/innovation.py      exploratory interaction and case diagnostics
+research/forecast_ledger.py frozen receipts and separate outcome evaluation
+research/test_innovation.py challenger and historical-replay checks
+research/test_forecast_ledger.py receipt and protocol checks
+research/prospective-protocol.json fixed prospective comparison recipe
+data/forecast-ledger.jsonl append-only monthly receipt records
 research/raw/               cached series used for reproducible research
 research/provider-cache/    original official fallback files and provenance
 research/folds.json         historical train/refit boundary audit

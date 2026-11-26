@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "HORIZON | Macro Risk Observatory",
-  description: "Read the cycle. Price the risk. A reproducible US macro observatory with recession risk, historical validation, and interactive bond stress tests.",
+  title: "HORIZON | Recession Alarm Audit",
+  description: "A recession alarm audit: credit-conditioned risk, the cost of false warnings, and prospective monthly forecast receipts.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",

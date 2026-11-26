@@ -1,0 +1,47 @@
+{
+  "protocolVersion": "horizon-prospective-v1",
+  "registeredAt": "2026-11-25T23:51:39.796571+00:00",
+  "recipe": {
+    "baselineFeatures": [
+      "slope",
+      "credit",
+      "labor"
+    ],
+    "challengerFeatures": [
+      "slope",
+      "credit",
+      "labor",
+      "interaction"
+    ],
+    "interactionFormula": "interaction = max(-slope, 0) * credit",
+    "baselinePenalty": 1.0,
+    "challengerPenalty": 1.0,
+    "featureLagMonths": 2,
+    "horizonMonths": 12,
+    "eligibilityMonths": 13,
+    "refitFrequency": "Annual expanding January refits; current estimate monthly refit",
+    "confirmationRule": "curveProbability >= threshold AND (credit > 0 OR labor >= 0.5)",
+    "defaultThreshold": 0.3,
+    "blendWeights": {
+      "baseline": 0.5,
+      "historicalBase": 0.5
+    },
+    "laborMissingPolicy": "Three-calendar-month mean requires at least two observations; twelve consecutive smoothed values for minimum; no interpolation"
+  },
+  "target": "At least one NBER recession month in the next 12 calendar months after issue month; requires all 12 published USREC observations to score.",
+  "capture": "Freeze the first successful research refresh in each issue month. Capture time is actual UTC time, never the nominal first of the issue month. No missed month is backfilled.",
+  "models": {
+    "baseline": "Prespecified three-input L2 logistic recession model.",
+    "challenger": "Exploratory credit-confirmed curve challenger: same three inputs plus max(-slope,0)*credit; fixed L2 penalty 1.",
+    "historicalBase": "Recession-horizon prevalence in the baseline training sample.",
+    "blend": "Exploratory comparator: fixed equal weight of baseline model and historical training prevalence; chosen after historical inspection."
+  },
+  "disclosure": "The challenger was proposed after examining historical results. Prospective receipts begin now; historical replay is not a real-time or untouched test.",
+  "revisions": "Never rewrite a monthly receipt when data or models are revised. Evaluate outcomes separately against the latest actually published USREC values, which may themselves be revised.",
+  "integrity": "SHA-256 over canonical JSON (sorted keys, compact UTF-8, no NaN), including the previous receipt hash. Hash-linked public Git receipts are not tamper-proof, blockchain-backed, or independently timestamped.",
+  "metrics": [
+    "Brier score",
+    "log loss"
+  ],
+  "probabilityUnits": "fraction from 0 to 1"
+}

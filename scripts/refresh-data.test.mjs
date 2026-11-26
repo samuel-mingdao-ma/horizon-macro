@@ -113,3 +113,28 @@ test('research fetches bypass stale branch CDN entries while keeping canonical p
   assert.notEqual(requests[0].url.href, requests[1].url.href);
   assert.equal(first.meta.refresh.sourceUrl, RESEARCH_SNAPSHOT_URL);
 });
+
+
+test('new research builds retain a mathematically consistent alarm audit', async () => {
+  const {validateResearchSnapshot}=await import('../lib/live-data.ts');
+  if(!snapshot.innovation) return;
+  const now=new Date(snapshot.meta.generatedAt);
+  const missing=structuredClone(snapshot);delete missing.innovation;
+  assert.throws(()=>validateResearchSnapshot(missing,snapshot,now),/alarm audit/);
+  const wrongInteraction=structuredClone(snapshot);wrongInteraction.innovation.latest.features.interaction+=1;
+  assert.throws(()=>validateResearchSnapshot(wrongInteraction,snapshot,now),/interaction/);
+  const wrongScore=structuredClone(snapshot);wrongScore.innovation.latest.probability+=.01;
+  assert.throws(()=>validateResearchSnapshot(wrongScore,snapshot,now),/probability/);
+});
+
+test('research refresh cannot drop or regress its prospective archive',async()=>{
+  const {validateResearchSnapshot}=await import('../lib/live-data.ts');
+  if(!snapshot.prospective)return;
+  const now=new Date(snapshot.meta.generatedAt);
+  const missing=structuredClone(snapshot);delete missing.prospective;
+  assert.throws(()=>validateResearchSnapshot(missing,snapshot,now),/forecast archive/);
+  const future=structuredClone(snapshot);future.prospective.latestReceipt.issueDate=monthOffset(snapshot.latest.issueDate,1);
+  assert.throws(()=>validateResearchSnapshot(future,snapshot,now),/forecast archive/);
+  const badHash=structuredClone(snapshot);badHash.prospective.lastHash='a'.repeat(64);
+  assert.throws(()=>validateResearchSnapshot(badHash,snapshot,now),/forecast archive/);
+});
