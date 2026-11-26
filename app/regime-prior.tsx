@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ArrowDownToLine, ChevronDown, CircleHelp, ShieldCheck } from 'lucide-react';
 import type { Snapshot } from '../lib/types';
 import type { RegimePriorMethod, RegimePriorSlice, RegimeStateId } from '../lib/regime-prior-types';
+import { regimeErrorBreakdown } from '../lib/regime-annual-check';
 import { RegimeAnnualCheck } from './regime-annual-check';
 import './regime-prior.css';
 
@@ -67,6 +68,7 @@ export default function RegimePrior({ data }: { data: Snapshot }) {
   const inspected =
     latest.stateMap.find((cell) => cell.id === (inspectedId ?? latest.state)) ?? latest.stateMap[0];
   const selectedCohort = trial.metrics[cohortId];
+  const { outcomes } = regimeErrorBreakdown(trial.history, selectedCohort.start, selectedCohort.end);
   const prospective = trial.prospective;
   const receipt = prospective?.latestReceipt;
   const hasAdaptive = typeof latest.adaptiveProbability === 'number';
@@ -436,7 +438,15 @@ export default function RegimePrior({ data }: { data: Snapshot }) {
           </table>
         </div>
         <div className="rg-empirical-readout">
-          <h3>What changes when the prior changes?</h3>
+          <h3>Where did the forecast error change?</h3>
+          <p aria-live="polite">
+            In the {cohortId === 'all' ? 'full replay' : 'latest ten years'}, {outcomes[0].n} forecasts were
+            followed by a year without a recession month. For those forecasts, average squared error went from{' '}
+            <strong>{number(outcomes[0].fixed, 5)}</strong> with the existing 50/50 to{' '}
+            <strong>{number(outcomes[0].regime, 5)}</strong> with the regime blend. In the {outcomes[1].n}{' '}
+            windows containing a recession month, it went from <strong>{number(outcomes[1].fixed, 5)}</strong>{' '}
+            to <strong>{number(outcomes[1].regime, 5)}</strong>.
+          </p>
           <p>
             Over the exact trailing window, the pooled recent-prior blend has Brier{' '}
             {number(recentScores.recentBlend.brier)}, versus {number(recentScores.fixedBlend.brier)} for the

@@ -1,5 +1,5 @@
 // Each calendar-month cohort issues forecasts exactly one year apart.
-export function annualOriginScores(
+export function regimeErrorBreakdown(
   history: Record<string, unknown>[],
   start: string | null,
   end: string | null,
@@ -21,6 +21,7 @@ export function annualOriginScores(
     'expandingBlendProbability',
     'dynamicPriorProbability',
   ];
+  const outcomes = [0, 1].map((target) => ({ target, n: 0, fixed: 0, regime: 0 }));
   const seen = new Set<string>();
   for (const row of history) {
     const { date, target, fixedBlendProbability, probability: regime, adaptiveProbability } = row;
@@ -43,11 +44,16 @@ export function annualOriginScores(
     const group = groups[Number(date.slice(5, 7)) - 1];
     group.n++;
     group.positives += target;
-    group.fixed += (fixedBlendProbability - target) ** 2;
-    group.regime += (regime - target) ** 2;
+    const fixedError = (fixedBlendProbability - target) ** 2;
+    const regimeError = (regime - target) ** 2;
+    group.fixed += fixedError;
+    group.regime += regimeError;
+    outcomes[target].n++;
+    outcomes[target].fixed += fixedError;
+    outcomes[target].regime += regimeError;
     group.adaptive += (adaptiveProbability - target) ** 2;
   }
-  return groups.map((g) => ({
+  const origins = groups.map((g) => ({
     month: g.month,
     n: g.n,
     positives: g.positives,
@@ -55,4 +61,13 @@ export function annualOriginScores(
     regimeDelta: g.n ? (g.regime - g.fixed) / g.n : null,
     adaptiveDelta: g.n ? (g.adaptive - g.fixed) / g.n : null,
   }));
+  return {
+    origins,
+    outcomes: outcomes.map((row) => ({
+      target: row.target,
+      n: row.n,
+      fixed: row.n ? row.fixed / row.n : null,
+      regime: row.n ? row.regime / row.n : null,
+    })),
+  };
 }

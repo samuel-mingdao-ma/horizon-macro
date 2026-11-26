@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { annualOriginScores } from '../lib/regime-annual-check.ts';
+import { regimeErrorBreakdown } from '../lib/regime-annual-check.ts';
 
 test('annual horizons are grouped by the actual calendar month on paired, dated outcomes', () => {
   const issue = (date, target) => ({
@@ -16,7 +16,7 @@ test('annual horizons are grouped by the actual calendar month on paired, dated 
     probability: 0.25,
     adaptiveProbability: 0.5,
   });
-  const rows = annualOriginScores(
+  const { origins: rows, outcomes } = regimeErrorBreakdown(
     [
       issue('1999-01-01', 1),
       issue('2000-01-01', 0),
@@ -48,4 +48,8 @@ test('annual horizons are grouped by the actual calendar month on paired, dated 
   });
   assert.equal(rows[2].fixed, null);
   assert.equal(rows[3].n, 0);
+  assert.deepEqual(outcomes, [
+    { target: 0, n: 2, fixed: 0.25, regime: 0.0625 },
+    { target: 1, n: 1, fixed: 0.25, regime: 0.5625 },
+  ]);
 });

@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import type { RegimePriorSnapshot } from '../lib/regime-prior-types';
-import { annualOriginScores } from '../lib/regime-annual-check';
+import { regimeErrorBreakdown } from '../lib/regime-annual-check';
 import './regime-annual-check.css';
 
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -10,7 +10,7 @@ const difference = (v: number | null) => (v === null ? '—' : `${v > 0 ? '+' : 
 export function RegimeAnnualCheck({ trial }: { trial: RegimePriorSnapshot }) {
   const [sample, setSample] = useState<'all' | 'rolling120'>('rolling120');
   const cohort = trial.metrics[sample];
-  const rows = annualOriginScores(trial.history, cohort.start, cohort.end);
+  const { origins: rows } = regimeErrorBreakdown(trial.history, cohort.start, cohort.end);
   const available = rows.filter((row) => row.n);
   const wins = available.filter((row) => row.regimeDelta !== null && row.regimeDelta < 0).length;
   return (
