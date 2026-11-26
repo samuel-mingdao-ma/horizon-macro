@@ -86,7 +86,7 @@ test('invalid thresholds throw and valid endpoint thresholds are deterministic',
   assert.equal(deriveWarningAudit({ history: [row('2020-01-01', { probability: 1 })] }, 1).cohorts.all.rules.original.alertMonths, 1);
 });
 
-test('real research output retains all matured rows, exposes expansion conditioning and partial 1990 coverage', async () => {
+test('real research output retains matured rows and derives episode coverage from current source dates', async () => {
   const snapshot = JSON.parse(await readFile(new URL('../data/snapshot.json', import.meta.url), 'utf8'));
   const before = JSON.stringify(snapshot); const audit = deriveWarningAudit(snapshot);
   assert.equal(JSON.stringify(snapshot), before, 'pure audit must not mutate input');
@@ -96,8 +96,41 @@ test('real research output retains all matured rows, exposes expansion condition
   assert.ok(Math.abs(audit.cohorts.all.rules.original.brier - snapshot.metrics.model.brier) < 1e-9);
   assert.ok(Math.abs(audit.cohorts.all.rules.original.auc - snapshot.metrics.model.auc) < 1e-9);
   assert.ok(Math.abs(audit.cohorts.all.rules.challenger.brier - snapshot.innovation.metrics.challenger.brier) < 1e-9);
-  assert.equal(audit.episodes.length, 4);
-  assert.equal(audit.episodes[0].availableMonths, 7); assert.equal(audit.episodes[0].coverage, 'partial');
-  for (const rule of WARNING_RULES) assert.equal(audit.episodeAggregate[rule].completeEpisodes, 3);
+  const monthIndex=date=>Number(date.slice(0,4))*12+Number(date.slice(5,7))-1;
+  const sourceByMonth=new Map((snapshot.innovation?.history??[]).map(row=>[monthIndex(row.date),row]));
+  for(const row of snapshot.history) sourceByMonth.set(monthIndex(row.date),row);
+  const months=[...sourceByMonth.keys()].sort((a,b)=>a-b);
+  const expectedStarts=[...new Set(snapshot.recessions.map(period=>period.start))]
+    .filter(start=>monthIndex(start)>months[0]&&monthIndex(start)<=months.at(-1)+1).sort();
+  assert.deepEqual(audit.episodes.map(episode=>episode.start),expectedStarts);
+  for(const episode of audit.episodes){
+    const onset=monthIndex(episode.start);
+    const available=Array.from({length:12},(_,i)=>sourceByMonth.get(onset-12+i))
+      .filter(row=>row&&row.recession===0&&(row.target===0||row.target===1));
+    assert.equal(episode.availableMonths,available.length);
+    assert.equal(episode.coverage,available.length===12?'complete':'partial');
+  }
+  for(const rule of WARNING_RULES){
+    const complete=audit.episodes.filter(episode=>episode.rules[rule].availableMonths===12);
+    const aggregate=audit.episodeAggregate[rule];
+    assert.equal(aggregate.totalEpisodes,audit.episodes.length);
+    assert.equal(aggregate.completeEpisodes,complete.length);
+    assert.equal(aggregate.partialEpisodes,audit.episodes.length-complete.length);
+    assert.equal(aggregate.hitEpisodes,complete.filter(episode=>episode.rules[rule].hit).length);
+  }
   assert.match(audit.disclosure, /not onset-trained/);
+});
+
+
+test('a new complete episode updates the denominator rather than assuming four historical episodes',()=>{
+  const first=deriveWarningAudit({history:fullPre(),recessions:[period]});
+  const laterOnset=onset+24;
+  const laterHistory=Array.from({length:12},(_,i)=>row(month(laterOnset-12+i),{probability:i===0?.8:.1}));
+  const laterPeriod={start:month(laterOnset),end:month(laterOnset+2)};
+  const second=deriveWarningAudit({history:[...fullPre(),...laterHistory],recessions:[period,laterPeriod]});
+  assert.equal(first.episodeAggregate.original.completeEpisodes,1);
+  assert.equal(first.episodeAggregate.original.hitEpisodes,0);
+  assert.equal(second.episodeAggregate.original.completeEpisodes,2);
+  assert.equal(second.episodeAggregate.original.hitEpisodes,1);
+  assert.equal(second.episodeAggregate.original.hitRate,.5);
 });

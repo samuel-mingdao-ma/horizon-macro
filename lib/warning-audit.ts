@@ -156,3 +156,12 @@ export function deriveWarningAudit(snapshot: unknown, threshold = .30): WarningA
     cohorts: { all: cohort(prepared, threshold), expansion: cohort(prepared.filter(row => row.recession === 0), threshold) },
     episodes, episodeAggregate };
 }
+
+/** Shared normalized replay/flags for deterministic duration audits. No label filling. */
+export type WarningReplayRow = PreparedRow & { signals: Record<WarningRuleId, boolean | null> };
+export function warningReplayRows(snapshot: unknown, threshold = .30): WarningReplayRow[] {
+  if (typeof threshold !== 'number' || !Number.isFinite(threshold) || threshold < 0 || threshold > 1)
+    throw new RangeError('Warning threshold must be a finite probability between 0 and 1.');
+  return prepare(object(snapshot)).map(row => ({ ...row, signals: Object.fromEntries(
+    WARNING_RULES.map(rule => [rule, alert(row, rule, threshold)])) as Record<WarningRuleId, boolean | null> }));
+}

@@ -107,6 +107,21 @@ class ProviderFallbackTests(unittest.TestCase):
    extra_dates=pd.date_range(frame.index[-1]+pd.Timedelta(days=7),end,freq='W-FRI')
    extra=pd.DataFrame({'NFCICREDIT':[frame.NFCICREDIT.dropna().iloc[-1]]*len(extra_dates)},index=extra_dates)
    frame=pd.concat([frame,extra]);frame.index.name='observation_date';frame.to_csv(path)
+   # Simulate a lagging optional tenor so this regression actually separates
+   # the Treasury observation cutoff from the latest published USREC month.
+   slow_path=temp/'research'/'raw'/'GS30.csv'
+   slow=pd.read_csv(slow_path,index_col=0,parse_dates=True)
+   slow=slow.loc[slow.index<target_last]
+   slow.index.name='observation_date';slow.to_csv(slow_path)
+   # Treasury and USREC releases can have different cutoffs. Compute the
+   # common available Treasury month independently of the outcome-label date.
+   curve_months=None
+   for series_id in ['TB3MS','GS1','GS2','GS5','GS10','GS30']:
+    values=pd.read_csv(temp/'research'/'raw'/f'{series_id}.csv',index_col=0,parse_dates=True)[series_id].dropna()
+    available=set(values.index[values.index<asof.to_period('M').to_timestamp()])
+    curve_months=available if curve_months is None else curve_months & available
+   expected_curve_date=max(curve_months).strftime('%Y-%m-%d')
+   self.assertLess(pd.Timestamp(expected_curve_date),target_last)
    engine.ROOT=temp;engine.RAW=temp/'research'/'raw'
    with patch.object(sys,'argv',['build_model.py','--offline','--as-of',asof.strftime('%Y-%m-%d')]),contextlib.redirect_stdout(io.StringIO()):
     engine.main()
@@ -121,6 +136,6 @@ class ProviderFallbackTests(unittest.TestCase):
    self.assertEqual(target_source['lastDate'],target_last.strftime('%Y-%m-%d'))
    curve_dates={row['date'] for row in result['yieldCurve']}
    self.assertEqual(len(curve_dates),1)
-   self.assertEqual(next(iter(curve_dates)),target_last.strftime('%Y-%m-%d'))
+   self.assertEqual(next(iter(curve_dates)),expected_curve_date)
 
 if __name__=='__main__':unittest.main(verbosity=2)

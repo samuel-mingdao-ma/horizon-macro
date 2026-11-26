@@ -78,6 +78,12 @@ On the same 430 historical months, the interaction candidate's AUC is **0.7848**
 
 All new hypotheses were developed after viewing the historical failures. Their chronological replay is **post-hoc exploration, not an untouched test**. Hash linking checks internal consistency; it does not provide independent timestamping, blockchain security, or tamper-proof certification. Read [the experiment, complete comparison, and prospective protocol](research/INNOVATION.md).
 
+## How long does a false warning last?
+
+In the November 2026 replay, the original model signaled every month from September 2022 through February 2026 at a 30% threshold. Of those 42 forecasts, the first 38 had completed twelve-month windows with no recession. The last four outcomes were pending. The longest confirmed false-warning streak was therefore **at least 38 months**. This one stretch accounts for 38 of the original model’s 107 mature false-warning months. [Explore the original model’s alarm history](https://horizon-macro-observatory.samel23.chatgpt.site/#history?rule=original&threshold=30)
+
+Requiring credit or labor confirmation cut the longest observed false-warning streak to **21 months**. That filter also flagged fewer recession-positive windows than the curve rule it modifies, **36 of 75 versus 53 of 75**. The calendar lets readers inspect individual months, vary the threshold, and download the underlying evidence. Each forecast covers the following twelve months, so consecutive results overlap. [Explore the confirmation rule](https://horizon-macro-observatory.samel23.chatgpt.site/#history?rule=gate&threshold=30)
+
 ## Run locally
 
 Prerequisites: Node.js **22.13 or later**, npm, Python **3.12 recommended**, and Git. No FRED API key is needed for the chart CSV endpoint used here.

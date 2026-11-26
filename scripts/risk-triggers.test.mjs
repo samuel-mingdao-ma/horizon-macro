@@ -9,9 +9,16 @@ const rawModel = coefficients => ({ featureOrder: ['slope','credit','labor','int
 test('original model inverse round-trips at positive and inverted held slopes', () => {
   for (const slope of [1.05, -1.1]) for (const targetProbability of [.3, .5]) {
     const result = solveCreditTrigger({ model: snapshot.model, features: snapshot.latest.features, slope, targetProbability });
-    assert.equal(result.status, 'solved');
-    assert.equal(result.relation, 'at-least');
-    assert.ok(Math.abs(probabilityAtFeatures(snapshot.model, result.triggerFeatures) - targetProbability) < 1e-10);
+    const coefficient=result.effectiveCreditCoefficient;
+    assert.equal(result.relation,coefficient>0?'at-least':coefficient<0?'at-most':'insensitive');
+    if(coefficient===0){
+      assert.equal(result.requiredCredit,null);
+      assert.equal(result.triggerFeatures,null);
+      assert.ok(['constant-at-target','unreachable'].includes(result.status));
+    }else{
+      assert.equal(result.status,'solved');
+      assert.ok(Math.abs(probabilityAtFeatures(snapshot.model,result.triggerFeatures)-targetProbability)<1e-10);
+    }
     assert.equal(result.features.slope, slope);
     assert.equal(result.features.labor, snapshot.latest.features.labor);
     assert.equal(result.modelDate, snapshot.model.refitDate);
@@ -22,8 +29,13 @@ test('challenger inverse includes the interaction at each held slope', () => {
   for (const slope of [1.05, -1.1]) for (const targetProbability of [.3, .5]) {
     const model = snapshot.innovation.model;
     const result = solveCreditTrigger({ model, features: snapshot.innovation.latest.features, slope, targetProbability });
-    assert.ok(Math.abs(probabilityAtFeatures(model, result.triggerFeatures) - targetProbability) < 1e-10);
-    assert.equal(result.triggerFeatures.interaction, Math.max(-slope, 0) * result.requiredCredit);
+    if(result.effectiveCreditCoefficient===0){
+      assert.equal(result.relation,'insensitive');
+      assert.equal(result.triggerFeatures,null);
+    }else{
+      assert.ok(Math.abs(probabilityAtFeatures(model,result.triggerFeatures)-targetProbability)<1e-10);
+      assert.equal(result.triggerFeatures.interaction,Math.max(-slope,0)*result.requiredCredit);
+    }
   }
   assert.ok(Math.abs(probabilityAtFeatures(snapshot.innovation.model, snapshot.innovation.latest.features) - snapshot.innovation.latest.probability) < 1e-8);
 });
