@@ -193,11 +193,44 @@ test('leading-indicator refresh preserves both the current comparisons and their
       available:false,probability:null,matchedThreeBlendProbability:null,permitsBlendProbability:null,
       claimsBlendProbability:null,rawProbability:null,
     });
+    if (unavailable.weightTrial) {
+      assert.throws(() => validateResearchSnapshot(unavailable, snapshot, now), /adaptive-weight/i);
+      Object.assign(unavailable.weightTrial.latest, {
+        available:false, rawPermitsProbability:null, fixedPermitsProbability:null, probability:null,
+        pooledPermitsProbability:null, fixedRuleProbability:null,
+      });
+    }
     assert.doesNotThrow(() => validateResearchSnapshot(unavailable, snapshot, now));
   }
   if (snapshot.leadingTrial.prospective?.receiptCount) {
     const truncated = structuredClone(snapshot);
     truncated.leadingTrial.prospective.receipts = [];
     assert.throws(() => validateResearchSnapshot(truncated, snapshot, now), /record missing or regressive/);
+  }
+});
+
+test('adaptive weights require consistent forecast components, paired warning dates and archived history', async () => {
+  const {validateResearchSnapshot} = await import('../lib/live-data.ts');
+  const now = new Date(snapshot.meta.generatedAt);
+  const drop = structuredClone(snapshot);
+  delete drop.weightTrial;
+  assert.throws(() => validateResearchSnapshot(drop,snapshot,now),/adaptive-weight/i);
+  if (snapshot.weightTrial.latest.available) {
+    for (const field of ['state','probability','permitsWeight','fixedRuleProbability']) {
+      const changed = structuredClone(snapshot);
+      changed.weightTrial.latest[field]=null;
+      assert.throws(() => validateResearchSnapshot(changed,snapshot,now),/Adaptive-weight forecast/);
+    }
+    const inconsistent = structuredClone(snapshot);
+    inconsistent.weightTrial.latest.fit.permits.pool.numerator += 2;
+    assert.throws(() => validateResearchSnapshot(inconsistent,snapshot,now), /Adaptive-weight fit/);
+  }
+  const mismatched = structuredClone(snapshot);
+  mismatched.weightTrial.warnings.windows.all.n++;
+  assert.throws(() => validateResearchSnapshot(mismatched,snapshot,now),/same evaluation months/);
+  if (snapshot.weightTrial.prospective?.receiptCount) {
+    const missing=structuredClone(snapshot);
+    missing.weightTrial.prospective.receipts=[];
+    assert.throws(() => validateResearchSnapshot(missing,snapshot,now),/record missing or regressive/);
   }
 });

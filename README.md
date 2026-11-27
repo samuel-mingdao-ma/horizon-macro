@@ -186,6 +186,10 @@ October 2025 UNRATE and CPI observations are missing in the official source. The
 
 Read [the full methodology](research/METHODOLOGY.md), [Alarm Lab research](research/INNOVATION.md), and [source audit notes](research/source-notes.md) for formulas, exact clock conventions, failure analysis and attribution.
 
+## Should the model’s weight change with the economy?
+
+The adaptive-weight trial compares six forecasts on identical issue months. The primary model learns how much weight to give the permits-augmented signal from completed earlier forecasts in two observable credit and yield-curve states. Compare full and trailing-decade probability errors, false alarms, and first or newly triggered recession warnings at a fixed 30% threshold. The issue explorer shows the weights available when each forecast was made. [Interactive trial](https://horizon-macro-observatory.samel23.chatgpt.site/#weights) · [Research design and evidence](research/INNOVATION.md#changing-the-signal-weight-by-economic-state)
+
 ## Early warning from building permits and initial claims
 
 The Before recession view traces each forecast back to the signals available two months earlier. It compares housing permits and initial unemployment claims against the existing 50/50 forecast using exactly the same months, historical base probability, model penalty and target. The page separates forecasts issued before recession onset from those issued during a recession, and shows calibration across all expansion issues. [Open the leading-indicator trial](https://horizon-macro-observatory.samel23.chatgpt.site/#leading) · [Read the evidence](research/INNOVATION.md#what-was-visible-before-recession-onset) · [Issue-level CSV](https://horizon-macro-observatory.samel23.chatgpt.site/api/download?file=leading)

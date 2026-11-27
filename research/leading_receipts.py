@@ -247,21 +247,22 @@ def create_receipt(snapshot, root, now, previous_hash):
     return row
 
 
-def report(rows, outcomes, now, status, available):
+def report(rows, outcomes, now, status, available, *, version=VERSION, predictions=PREDICTIONS,
+           download_url='/api/download?file=leadingreceipts'):
     matured = [(r['predictions'], o['target']) for r, o in zip(rows, outcomes) if o['status'] == 'matured']
-    scores = {key: None for key in PREDICTIONS}
-    for key in PREDICTIONS:
+    scores = {key: None for key in predictions}
+    for key in predictions:
         if not matured:
             continue
         brier = loss = 0.0
-        for predictions, target in matured:
-            p = predictions[key]
+        for issued, target in matured:
+            p = issued[key]
             brier += (p - target) ** 2
             clipped = min(max(p, 1e-12), 1 - 1e-12)
             loss -= math.log(clipped if target else 1 - clipped)
         scores[key] = dict(n=len(matured), brier=brier / len(matured), logLoss=loss / len(matured))
     return dict(
-        protocolVersion=VERSION,
+        protocolVersion=version,
         receiptCount=len(rows),
         maturedCount=len(matured),
         chainValid=True,
@@ -274,7 +275,7 @@ def report(rows, outcomes, now, status, available):
         latestReceipt=rows[-1] if rows else None,
         lastHash=rows[-1]['hash'] if rows else None,
         evaluatedAt=now.isoformat(),
-        downloadUrl='/api/download?file=leadingreceipts',
+        downloadUrl=download_url,
         note='The first actual forecast for each issue is frozen before its window opens. Scores use all twelve published recession labels. Overlapping forecasts can share the same downturn.',
     )
 
@@ -287,39 +288,42 @@ def replace_text(path, content):
 
 
 def update_receipts(root=ROOT, now=None):
+    return update_trial_archive(root, now, trial_key='leadingTrial', name='leading', fields=PREDICTIONS,
+        available=lambda trial: bool(trial.get('currentModels')), create=create_receipt,
+        verify=verify_receipts, summarize=report)
+
+
+def update_trial_archive(root, now, *, trial_key, name, fields, available, create, verify, summarize):
     root = Path(root)
     real_clock = now is None
     now = clock(now)
-    canonical = root / 'data/leading-receipts.jsonl'
-    mirror = root / 'public/data/leading-receipts.jsonl'
+    canonical = root / 'data' / f'{name}-receipts.jsonl'
+    mirror = root / 'public/data' / f'{name}-receipts.jsonl'
     snapshot_file = root / 'data/snapshot.json'
     if mirror.exists() and not canonical.exists():
-        raise ValueError('Public leading receipts exist without a canonical log')
+        raise ValueError(f'Public {name} receipts exist without a canonical log')
     canonical.parent.mkdir(parents=True, exist_ok=True)
     with canonical.open('a+') as file:
         fcntl.flock(file.fileno(), fcntl.LOCK_EX)
         if real_clock:
             now = clock()
         snapshot = json.loads(snapshot_file.read_text())
-        trial = snapshot.get('leadingTrial') or {}
+        trial = snapshot.get(trial_key) or {}
         latest = trial.get('latest') or {}
-        available = latest.get('available') is True
-        if available and (
-            any(latest.get(k) is None for k in PREDICTIONS.values()) or not trial.get('currentModels')
-        ):
-            available = False
+        complete = (latest.get('available') is True and available(trial)
+                    and all(latest.get(k) is not None for k in fields.values()))
         file.seek(0)
         saved = file.read()
         rows = [json.loads(line) for line in saved.splitlines()]
         if saved and not saved.endswith('\n'):
             raise ValueError('Incomplete leading receipt line')
-        verify_receipts(rows, now)
+        verify(rows, now)
         if mirror.exists():
             public = mirror.read_text()
             if not saved.startswith(public) or public and not public.endswith('\n'):
-                raise ValueError('Public leading receipts disagree with the canonical log')
+                raise ValueError(f'Public {name} receipts disagree with the canonical log')
         status = 'model-unavailable'
-        if available:
+        if complete:
             issue = latest['issueDate']
             if not is_month(issue) or issue > now.strftime('%Y-%m-01'):
                 raise ValueError('Cannot capture a future or invalid issue')
@@ -328,8 +332,8 @@ def update_receipts(root=ROOT, now=None):
             elif issue < now.strftime('%Y-%m-01'):
                 status = 'stale-issue-no-capture'
             else:
-                new = create_receipt(snapshot, root, now, rows[-1]['hash'] if rows else None)
-                verify_receipts([*rows, new], now)
+                new = create(snapshot, root, now, rows[-1]['hash'] if rows else None)
+                verify([*rows, new], now)
                 addition = canonical_json(new) + '\n'
                 file.write(addition)
                 file.flush()
@@ -345,9 +349,9 @@ def update_receipts(root=ROOT, now=None):
             outcomes = evaluate_outcomes(
                 rows, pd.to_numeric(rec, errors='raise'), now, source.get('retrievedAt')
             )
-        result = report(rows, outcomes, now, status, available)
-        if isinstance(snapshot.get('leadingTrial'), dict):
-            snapshot['leadingTrial']['prospective'] = result
+        result = summarize(rows, outcomes, now, status, complete)
+        if isinstance(snapshot.get(trial_key), dict):
+            snapshot[trial_key]['prospective'] = result
             data = json.dumps(snapshot, ensure_ascii=False, separators=(',', ':'), allow_nan=False)
             replace_text(snapshot_file, data)
             replace_text(root / 'public/data/snapshot.json', data)

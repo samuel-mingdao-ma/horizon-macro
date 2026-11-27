@@ -22,6 +22,8 @@ from rate_path import build_rate_path
 from regime_prior import build_regime_prior
 from leading_trial import build_leading_trial
 from onset_diagnostics import build_onset_diagnostics
+from weight_trial import build_weight_trial
+from weight_warning import build_weight_warnings
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW = ROOT / 'research' / 'raw'
@@ -423,6 +425,9 @@ def main():
     leading = build_leading_trial(panel, source, history_frame, latest, fit_logit, score, metrics)
     leading['diagnostics'] = build_onset_diagnostics(leading['history'], raw['USREC'], leading['metrics'])
     snapshot['leadingTrial'] = leading
+    weights = build_weight_trial(leading, metrics)
+    weights['warnings'] = build_weight_warnings(weights, raw['USREC'])
+    snapshot['weightTrial'] = weights
     # A compact panel with observation-month sources and issue-month lagged inputs.
     download=panel.copy()
     download.index.name='issue_date'
@@ -440,6 +445,8 @@ def main():
     pd.DataFrame(snapshot['regimePrior']['history']).to_csv(
         ROOT / 'public' / 'data' / 'regime-prior.csv', index=False, float_format='%.12f')
     pd.DataFrame(leading['history']).to_csv(ROOT / 'public' / 'data' / 'leading-indicators.csv',
+        index=False, float_format='%.12f')
+    pd.DataFrame(weights['history']).to_csv(ROOT / 'public' / 'data' / 'adaptive-weights.csv',
         index=False, float_format='%.12f')
     # Audit trail records the full fold boundary data separately for review.
     (ROOT/'research'/'folds.json').write_text(json.dumps(clean(folds),indent=2))

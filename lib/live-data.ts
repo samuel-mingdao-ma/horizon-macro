@@ -308,6 +308,73 @@ export function validateResearchSnapshot(candidate: unknown, base: MacroSnapshot
       }
     }
   }
+  if (base.weightTrial) {
+    const trial = value.weightTrial, current = trial?.latest;
+    const lead = value.leadingTrial?.latest;
+    const matches = (p: unknown, expected: number) => typeof p === 'number' && p >= 0 && p <= 1 && Math.abs(p - expected) < 1e-8;
+    if (!current || !lead || trial.spec?.id !== base.weightTrial.spec.id
+      || current.issueDate !== latest.issueDate || current.featureDate !== latest.featureDate
+      || current.forecastStart !== latest.forecastStart || current.forecastEnd !== latest.forecastEnd
+      || !matches(current.existingBlendProbability,(latest.baselineProbability+latest.probability)/2)
+      || typeof current.available !== 'boolean' || !Array.isArray(trial.history) || trial.warnings?.threshold !== .30) {
+      throw new Error('Missing or inconsistent adaptive-weight trial');
+    }
+    if (current.available) {
+      const fit = current.fit;
+      const credit = Number(latest.features.credit.toFixed(10)), slope = Number(latest.features.slope.toFixed(10));
+      const state = slope < 0 || credit > 0 ? 'stress' : 'normal';
+      const predicted = (signal: number, weight: number) => latest.baselineProbability + weight*(signal-latest.baselineProbability);
+      if (!lead.available || current.state !== state || fit?.refitDate !== current.issueDate
+        || fit.trainingCutoff !== monthOffset(current.issueDate,-13)
+        || !matches(current.fixedPermitsProbability,lead.permitsBlendProbability)
+        || !matches(current.rawPermitsProbability,2*lead.permitsBlendProbability-latest.baselineProbability)
+        || !matches(current.permitsWeight,fit.permits?.[state]?.weight)
+        || !matches(current.pooledWeight,fit.permits?.pool?.weight)
+        || !matches(current.originalWeight,fit.original?.[state]?.weight)
+        || !matches(current.fixedRuleWeight,state === 'stress' ? .75 : .25)
+        || !matches(current.probability,predicted(current.rawPermitsProbability,current.permitsWeight))
+        || !matches(current.fixedRuleProbability,predicted(current.rawPermitsProbability,current.fixedRuleWeight))
+        || !matches(current.pooledPermitsProbability,predicted(current.rawPermitsProbability,current.pooledWeight))
+        || !matches(current.originalDynamicProbability,predicted(latest.probability,current.originalWeight))) {
+        throw new Error('Adaptive-weight forecast disagrees with its inputs or fitted weights');
+      }
+      for (const arm of [fit.permits, fit.original]) {
+        if (!Number.isInteger(fit.trainingN) || fit.trainingN < 0 || fit.warmup !== (fit.trainingN < 60)
+          || arm?.pool?.n !== fit.trainingN || arm.normal?.n + arm.stress?.n !== fit.trainingN) {
+          throw new Error('Adaptive-weight fit has inconsistent training counts');
+        }
+        for (const name of ['pool', 'normal', 'stress']) {
+          const cell = arm[name], anchor = name === 'pool' ? .5 : arm.pool.weight;
+          if (!Number.isInteger(cell.n) || cell.n < 0 || !Number.isFinite(cell.numerator)
+            || !Number.isFinite(cell.denominator) || cell.denominator < 0
+            || !matches(cell.weight, fit.warmup ? .5 : Math.max(0, Math.min(1, (cell.numerator + anchor) / (cell.denominator + 1))))) {
+            throw new Error('Adaptive-weight fit disagrees with its training statistics');
+          }
+        }
+        for (const stat of ['numerator', 'denominator']) {
+          if (Math.abs(arm.pool[stat] - arm.normal[stat] - arm.stress[stat]) > 1e-8)
+            throw new Error('Adaptive-weight fit disagrees with pooled training statistics');
+        }
+      }
+    } else if (current.probability != null || (!lead.available && [
+      current.rawPermitsProbability, current.fixedPermitsProbability, current.fixedRuleProbability, current.pooledPermitsProbability,
+    ].some(value => value != null))) throw new Error('Unavailable adaptive-weight forecast has a value');
+    for (const key of ['all','rolling120']) {
+      const window = trial.metrics?.[key];
+      if (!Number.isInteger(window?.n) || window.n !== trial.warnings.windows?.[key]?.n
+        || !window.models?.fixedRule || !window.models?.candidate || !window.models?.existingBlend) {
+        throw new Error('Adaptive-weight errors and warnings must use the same evaluation months');
+      }
+    }
+    const previous = base.weightTrial.prospective?.receipts;
+    if (previous?.length) {
+      const archive = trial.prospective;
+      if (!archive?.chainValid || !Array.isArray(archive.receipts) || archive.receiptCount !== archive.receipts.length
+        || previous.some((row:{hash:string},i:number) => archive.receipts[i]?.hash !== row.hash)) {
+        throw new Error('Adaptive-weight forecast record missing or regressive');
+      }
+    }
+  }
   if (base.prospective) {
     const archive=value.prospective;
     if (!archive || archive.protocolVersion!==base.prospective.protocolVersion || archive.chainValid!==true

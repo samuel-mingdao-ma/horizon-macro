@@ -620,6 +620,7 @@ export default function LeadingIndicators({ data }: { data: Snapshot }) {
           </p>
         </details>
       </section>
+      <p><a className="research-evidence-link" href="#weights">See how changing the permits model’s 50/50 weight affects accuracy and warning time.</a></p>
       <section className="li-section li-forward">
         <div className="li-section-head">
           <div>
