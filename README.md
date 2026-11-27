@@ -6,6 +6,10 @@ An updating quantitative research website that asks: **What do the Treasury curv
 
 HORIZON combines public Federal Reserve data, interpretable models, chronological validation, an interactive **Alarm Lab**, and frozen prospective forecast receipts. Its central finding is useful precisely because the proposed credit interaction did not cure the historical false alarm. It is a student research project, not an official Federal Reserve forecast. The website is publicly accessible; its source and refresh history are available on GitHub.
 
+## Recession onset from expansion
+
+The expansion-onset experiment asks how often the U.S. enters recession in the next twelve months given an expansion at issue. It refits the four-signal permits model and the historical base using only mature expansion-origin forecasts. The November 2026 replay improved paired probability error and reduced quiet-month warnings over both periods. Its first warning in the 2001 episode moved one month later. In the most recent decade, the historical expansion base rate alone scored better than either model and stayed below the alarm threshold throughout. The page compares both forecast components, shows the twelve monthly issues preceding each recession and records conditional forecasts as they are issued. [Expansion-onset experiment](https://horizon-macro-observatory.samel23.chatgpt.site/#onset)
+
 ## Credit dynamics
 
 The permits model assigns half its forecast to a ridge-logistic signal and half to the expanding historical base rate. A new trial splits credit into its trailing level and its latest change while keeping this blend fixed. The November 2026 replay removed two quiet-expansion alerts across 430 mature issues. All three other alert changes occurred during the 2007–09 recession. The recent decade had identical alarm decisions and higher probability error for the split model. Each issue, model control, credit state and forecast record can be inspected or downloaded. [Credit dynamics](https://horizon-macro-observatory.samel23.chatgpt.site/#credit)

@@ -38,9 +38,10 @@ def summarize_state(state, rows):
     )
 
 
-def build_credit_diagnostics(trial, labels):
+def paired_warning_report(trial, labels):
+    """Compare two thresholded forecasts on exactly the same mature issues as their probability scores."""
     windows = warning_windows(trial, labels, FORECASTS, {'comparison': ('benchmark', 'candidate')})
-    buckets = {}
+    samples = {}
     for name, w in windows.items():
         rows = [
             r
@@ -50,15 +51,14 @@ def build_credit_diagnostics(trial, labels):
             and r['commonMature']
             and w['windowStart'] <= r['date'] <= w['windowEnd']
         ]
-        groups = {state: [] for state in STATES}
+        samples[name] = rows
         changes = dict(quietRemoved=0, quietAdded=0, preOnsetRemoved=0, preOnsetAdded=0)
+        phases = {'expansion-no-recession': 'quiet', 'pre-onset': 'preOnset'}
         for row in rows:
-            groups[credit_state(row)].append(row)
-            phase = {'expansion-no-recession': 'quiet', 'pre-onset': 'preOnset'}.get(row['issuePhase'])
+            phase = phases.get(row['issuePhase'])
             candidate_alert = row['probability'] >= THRESHOLD
             if phase and (row['benchmarkProbability'] >= THRESHOLD) != candidate_alert:
                 changes[phase + ('Added' if candidate_alert else 'Removed')] += 1
-        buckets[name] = [summarize_state(state, groups[state]) for state in STATES]
         w['alertChanges'] = changes
         w['fewerQuietAlarms'] = (
             w['quietExpansionN'] > 0
@@ -75,10 +75,43 @@ def build_credit_diagnostics(trial, labels):
             passed=all(field(w) for w in windows.values()),
         )
 
-    return dict(
+    report = dict(
         threshold=THRESHOLD,
         windows=windows,
-        buckets=buckets,
         gate=both(lambda w: w['comparison']['passes']),
         jointGate=both(lambda w: w['allObjectivesMet']),
     )
+    return report, samples
+
+
+def build_credit_diagnostics(trial, labels):
+    report, samples = paired_warning_report(trial, labels)
+    report['buckets'] = {}
+    for period, rows in samples.items():
+        groups = {state: [] for state in STATES}
+        for row in rows:
+            groups[credit_state(row)].append(row)
+        report['buckets'][period] = [summarize_state(state, group) for state, group in groups.items()]
+    return report
+
+
+def build_expansion_diagnostics(trial, labels):
+    report, samples = paired_warning_report(trial, labels)
+    for period, rows in samples.items():
+        window = report['windows'][period]
+        if window['preOnsetN'] + window['quietExpansionN'] != len(rows):
+            raise ValueError('Onset comparisons require retrospectively identified expansion issues')
+        window['outcomeScores'] = {}
+        for name, target in [('quiet', 0), ('preOnset', 1)]:
+            group = [r for r in rows if r['target'] == target]
+            window['outcomeScores'][name] = {
+                'n': len(group),
+                **{
+                    key: {
+                        'meanRisk': fmean(r[field] for r in group) if group else None,
+                        'brier': fmean((r[field] - target) ** 2 for r in group) if group else None,
+                    }
+                    for key, field in FORECASTS.items()
+                },
+            }
+    return report

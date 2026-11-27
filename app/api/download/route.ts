@@ -6,6 +6,8 @@ const files = {
   panel: {path:'panel.csv',type:'text/csv; charset=utf-8'},
   predictions: {path:'predictions.csv',type:'text/csv; charset=utf-8'},
   audit: {path:'alarm-audit.csv',type:'text/csv; charset=utf-8'},
+  expansion: {path:'expansion-onset.csv',type:'text/csv; charset=utf-8'},
+  expansionreceipts: {path:'expansion-receipts.jsonl',type:'application/x-ndjson; charset=utf-8'},
   creditdynamics: {path:'credit-dynamics.csv',type:'text/csv; charset=utf-8'},
   creditreceipts: {path:'credit-receipts.jsonl',type:'application/x-ndjson; charset=utf-8'},
   weights: {path:'adaptive-weights.csv',type:'text/csv; charset=utf-8'},
@@ -45,5 +47,5 @@ export async function GET(request: Request) {
     }catch{/* Bundled, dated downloads remain available if the remote source fails. */}
     return Response.redirect(new URL(`/data/${entry.path}`,request.url),303);
   }
-  return Response.json({error:'Choose snapshot, panel, predictions, audit, probability, ledger, ratepath, ratepathreceipts, regimes, regimereceipts, leading, leadingreceipts, weights, weightreceipts, creditdynamics, or creditreceipts.'},{status:400});
+  return Response.json({error:'Choose snapshot, panel, predictions, audit, probability, ledger, ratepath, ratepathreceipts, regimes, regimereceipts, leading, leadingreceipts, weights, weightreceipts, creditdynamics, creditreceipts, expansion, or expansionreceipts.'},{status:400});
 }

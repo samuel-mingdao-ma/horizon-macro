@@ -430,6 +430,62 @@ export function validateResearchSnapshot(candidate: unknown, base: MacroSnapshot
       }
     }
   }
+  if (base.expansionTrial) {
+    const trial = value.expansionTrial, c = trial?.latest, lead = value.leadingTrial?.latest;
+    const near = (a: unknown, b: unknown) => typeof a === 'number' && typeof b === 'number' && Math.abs(a-b) < 1e-8;
+    if (!c || !lead || trial.spec?.id !== base.expansionTrial.spec.id || !Array.isArray(trial.history)
+      || c.conditionalOnExpansion !== true || typeof c.available !== 'boolean'
+      || !['issueDate','featureDate','forecastStart','forecastEnd'].every(k => c[k] === latest[k])
+      || !near(c.baselineProbability,latest.baselineProbability)
+      || !(c.benchmarkProbability === null && lead.permitsBlendProbability === null
+        || near(c.benchmarkProbability,lead.permitsBlendProbability))) {
+      throw new Error('Missing or inconsistent expansion-onset trial');
+    }
+    if (c.available) {
+      const model = trial.currentModel, order = ['slope','credit','labor','permitGrowth6'];
+      if (!lead.available || !model || JSON.stringify(model.featureOrder) !== JSON.stringify(order)
+        || !order.every(k => near(c[k],lead.features[k])) || !Number.isFinite(model.intercept) || model.penalty !== 1
+        || !['means','scales','coefficients'].every(k => Array.isArray(model[k]) && model[k].length === order.length && model[k].every(Number.isFinite))
+        || model.scales.some((v:number) => v <= 0) || c.refitDate !== c.issueDate
+        || c.trainingCutoff !== monthOffset(c.refitDate,-13) || !isMonth(c.trainEnd) || c.trainEnd > c.trainingCutoff
+        || c.lastTargetMonth !== monthOffset(c.trainEnd,12) || c.lastTargetMonth >= c.issueDate
+        || !['trainingN','trainingPositives','trainingOnsets','refitDate','trainingCutoff','lastTargetMonth'].every(k => model[k] === c[k])
+        || model.trainedFrom !== c.trainStart || model.trainedThrough !== c.trainEnd
+        || ![c.trainingN,c.trainingPositives,c.trainingOnsets].every(Number.isInteger) || c.trainingN < 100
+        || c.trainingOnsets < 1 || c.trainingOnsets > c.trainingPositives || c.trainingPositives >= c.trainingN
+        || !near(c.expansionPriorProbability,c.trainingPositives/c.trainingN)
+        || !near(c.rawExpansionProbability,score(c,model).probability)
+        || !near(c.rawPermitsProbability,2*c.benchmarkProbability-c.baselineProbability)
+        || !near(c.probability,(c.rawExpansionProbability+c.expansionPriorProbability)/2)
+        || !near(c.signalOnlyChangeProbability,(c.rawExpansionProbability+c.baselineProbability)/2)
+        || !near(c.baseOnlyChangeProbability,(c.rawPermitsProbability+c.expansionPriorProbability)/2)) {
+        throw new Error('Expansion-onset forecast or training clock disagrees with recorded inputs');
+      }
+    } else if (c.probability != null || c.signalOnlyChangeProbability != null || c.baseOnlyChangeProbability != null) {
+      throw new Error('Unavailable expansion-onset comparison has a published forecast');
+    }
+    for (const key of ['all','rolling120']) {
+      const s = trial.metrics?.[key], w = trial.warnings?.windows?.[key];
+      if (!s || !w || trial.warnings.threshold !== .30 || w.windowStart !== s.windowStart
+        || w.windowEnd !== s.windowEnd || w.n !== s.n || w.preOnsetN !== s.positiveWindows
+        || w.preOnsetN + w.quietExpansionN !== s.n || w.outcomeScores?.quiet?.n !== w.quietExpansionN
+        || w.outcomeScores?.preOnset?.n !== w.preOnsetN || s.expansionN !== s.n + s.missingCandidateMonths
+        || s.matureBenchmarkN !== s.expansionN + s.recessionN + s.unknownPhaseN + s.incompleteHorizonN
+        || s.expectedCalendarMonths !== s.matureBenchmarkN + s.missingBenchmarkMonths
+        || !s.models?.expansionPrior || !s.models?.candidate || !s.models?.benchmark) {
+        throw new Error('Expansion-onset evaluation cohorts disagree');
+      }
+    }
+    const previous = base.expansionTrial.prospective, archive = trial.prospective;
+    if (previous?.receiptCount || archive) {
+      if (!archive?.chainValid || !Array.isArray(archive.receipts) || archive.receipts.length !== archive.receiptCount
+        || ![archive.maturedCount,archive.excludedCount,archive.pendingCount].every(n => Number.isInteger(n) && n >= 0)
+        || archive.receiptCount !== archive.maturedCount + archive.excludedCount + archive.pendingCount
+        || previous?.receipts?.some((r:{hash:string},i:number) => archive.receipts[i]?.hash !== r.hash)) {
+        throw new Error('Expansion-onset forecast records missing, inconsistent or regressive');
+      }
+    }
+  }
   if (base.prospective) {
     const archive=value.prospective;
     if (!archive || archive.protocolVersion!==base.prospective.protocolVersion || archive.chainValid!==true

@@ -204,6 +204,10 @@ test('leading-indicator refresh preserves both the current comparisons and their
       Object.assign(unavailable.creditTrial.latest, {available:false,benchmarkProbability:null,
         probability:null,matchedLevelProbability:null,slowOnlyProbability:null,shockOnlyProbability:null});
     }
+    if (unavailable.expansionTrial) {
+      Object.assign(unavailable.expansionTrial.latest, {available:false, benchmarkProbability:null,
+        rawPermitsProbability:null, probability:null, signalOnlyChangeProbability:null, baseOnlyChangeProbability:null});
+    }
     assert.doesNotThrow(() => validateResearchSnapshot(unavailable, snapshot, now));
   }
   if (snapshot.leadingTrial.prospective?.receiptCount) {
@@ -256,5 +260,29 @@ test('credit dynamics remote updates retain paired evidence and reproduce the is
     const invalid = structuredClone(snapshot);
     mutate(invalid);
     assert.throws(() => validateResearchSnapshot(invalid,snapshot,now), /credit dynamics/i);
+  }
+});
+
+test('expansion-onset research keeps comparable expansion cohorts and validates the conditional probability', async () => {
+  const {validateResearchSnapshot} = await import('../lib/live-data.ts');
+  const now = new Date(snapshot.meta.generatedAt);
+  const corruptions = [
+    d => { delete d.expansionTrial; },
+    d => { d.expansionTrial.latest.conditionalOnExpansion = false; },
+    d => { d.expansionTrial.metrics.rolling120.recessionN++; },
+    ...(snapshot.expansionTrial.latest.available ? [
+      d => { d.expansionTrial.latest.rawExpansionProbability += .05; },
+      d => { d.expansionTrial.latest.trainingPositives++; },
+      d => { d.expansionTrial.latest.baseOnlyChangeProbability = -1; },
+    ] : []),
+    ...(snapshot.expansionTrial.prospective?.receiptCount ? [
+      d => { d.expansionTrial.prospective.receipts = []; },
+      d => { d.expansionTrial.prospective.excludedCount++; },
+    ] : []),
+  ];
+  for (const mutate of corruptions) {
+    const invalid = structuredClone(snapshot);
+    mutate(invalid);
+    assert.throws(() => validateResearchSnapshot(invalid,snapshot,now), /expansion-onset/i);
   }
 });

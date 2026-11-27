@@ -293,7 +293,8 @@ def update_receipts(root=ROOT, now=None):
         verify=verify_receipts, summarize=report)
 
 
-def update_trial_archive(root, now, *, trial_key, name, fields, available, create, verify, summarize):
+def update_trial_archive(root, now, *, trial_key, name, fields, available, create, verify, summarize,
+                         evaluate=evaluate_outcomes):
     root = Path(root)
     real_clock = now is None
     now = clock(now)
@@ -346,7 +347,7 @@ def update_trial_archive(root, now, *, trial_key, name, fields, available, creat
         if rows:
             rec = pd.read_csv(root / 'research/raw/USREC.csv', index_col=0, parse_dates=True).USREC
             source = next((s for s in snapshot['sources'] if s['id'] == 'USREC'), {})
-            outcomes = evaluate_outcomes(
+            outcomes = evaluate(
                 rows, pd.to_numeric(rec, errors='raise'), now, source.get('retrievedAt')
             )
         result = summarize(rows, outcomes, now, status, complete)
