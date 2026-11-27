@@ -74,7 +74,7 @@ def _episode_model(onset, dates, history, field):
     )
 
 
-def _episode(onset, start, end, paired, history):
+def _episode(onset, start, end, paired, history, forecasts):
     calendar = pd.period_range(onset - 12, onset - 1, freq='M')
     within = [date for date in calendar if start <= date <= end]
     if not within:
@@ -94,12 +94,11 @@ def _episode(onset, start, end, paired, history):
         outsideWindowMonths=12 - len(within),
         missingPairedMonths=len(within) - len(observed),
         otherOrUnknownPhaseMonths=len(observed) - len(eligible),
-        methods={key: _episode_model(onset, eligible, history, field) for key, field in FORECASTS.items()},
+        methods={key: _episode_model(onset, eligible, history, field) for key, field in forecasts.items()},
     )
 
 
-def _summarize_method(key, episodes, phase_rows):
-    field = FORECASTS[key]
+def _summarize_method(key, field, episodes, phase_rows):
     methods = [episode['methods'][key] for episode in episodes]
     leads = [episode['leadMonths'] or 0 for episode in methods]
     cross_leads = [episode['crossLeadMonths'] or 0 for episode in methods]
@@ -151,7 +150,7 @@ def _compare(episodes, summary, reference, contender='candidate'):
     )
 
 
-def _window(metric, onsets, history):
+def warning_window(metric, onsets, history, forecasts, comparisons):
     first, last = metric['windowStart'], metric['windowEnd']
     start, end = _month(first) if first else None, _month(last) if last else None
     paired = {
@@ -160,7 +159,7 @@ def _window(metric, onsets, history):
         if start is not None and end is not None and start <= date <= end and row['commonMature']
     }
     if len(paired) != metric['n'] or any(
-        not all(_score(row.get(field)) for field in FORECASTS.values()) for row in paired.values()
+        not all(_score(row.get(field)) for field in forecasts.values()) for row in paired.values()
     ):
         raise ValueError(
             'Warning evaluation requires the same paired mature predictions as the Brier comparison'
@@ -169,7 +168,7 @@ def _window(metric, onsets, history):
     for onset in onsets:
         if start is None or end is None or not start < onset <= end + 12:
             continue
-        episodes.append(_episode(onset, start, end, paired, history))
+        episodes.append(_episode(onset, start, end, paired, history, forecasts))
     complete = [episode for episode in episodes if episode['coverage'] == 'full']
     phase_rows = {
         phase: [row for row in paired.values() if row['issuePhase'] == phase]
@@ -179,7 +178,7 @@ def _window(metric, onsets, history):
         row['target'] != 1 for row in phase_rows['pre-onset']
     ):
         raise ValueError('Pre-onset and quiet-expansion phases disagree with their twelve-month targets')
-    summary = {key: _summarize_method(key, complete, phase_rows) for key in FORECASTS}
+    summary = {key: _summarize_method(key, field, complete, phase_rows) for key, field in forecasts.items()}
     return dict(
         windowStart=first,
         windowEnd=last,
@@ -193,19 +192,27 @@ def _window(metric, onsets, history):
         unavailableEpisodes=sum(row['coverage'] == 'unavailable' for row in episodes),
         episodes=episodes,
         summary=summary,
-        comparison=_compare(complete, summary, 'existingBlend'),
-        versusFixedPermits=_compare(complete, summary, 'fixedPermits'),
-        fixedRuleComparison=_compare(complete, summary, 'existingBlend', contender='fixedRule'),
+        **{name: _compare(complete, summary, baseline, contender)
+           for name, (baseline, contender) in comparisons.items()},
     )
 
 
-def build_weight_warnings(trial, raw_usrec):
+def warning_windows(trial, raw_usrec, forecasts, comparisons):
     """Enumerate observed USREC 0→1 onsets independently of the candidate's coverage."""
     history = {_month(row['date']): row for row in trial['history']}
     if len(history) != len(trial['history']):
         raise ValueError('Duplicate monthly issue in the weight-trial replay')
     onsets = _onsets(raw_usrec)
-    windows = {key: _window(trial['metrics'][key], onsets, history) for key in ['all', 'rolling120']}
+    return {key: warning_window(trial['metrics'][key], onsets, history, forecasts, comparisons)
+            for key in ('all', 'rolling120')}
+
+
+def build_weight_warnings(trial, raw_usrec):
+    windows = warning_windows(trial, raw_usrec, FORECASTS, {
+        'comparison': ('existingBlend', 'candidate'),
+        'versusFixedPermits': ('fixedPermits', 'candidate'),
+        'fixedRuleComparison': ('existingBlend', 'fixedRule'),
+    })
 
     def gate(comparison):
         full = windows['all'][comparison]['passes']

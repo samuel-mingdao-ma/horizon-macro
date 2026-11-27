@@ -76,7 +76,7 @@ def probability(value):
     return value if value is not None and 0 <= value <= 1 else None
 
 
-def fit_models(complete, refit, fit_logit):
+def fit_models(complete, refit, fit_logit, *, models=MODELS):
     cutoff = refit - pd.DateOffset(months=13)
     train = complete.loc[complete.index <= cutoff].dropna(subset=['target'])
     fold = dict(
@@ -93,11 +93,11 @@ def fit_models(complete, refit, fit_logit):
         fold['reason'] = 'Fewer than 100 complete training issues or only one outcome class.'
         return {}, fold
     assert train.index[-1] + pd.DateOffset(months=12) < refit
-    fitted = {name: fit_logit(train[columns], train.target, penalty=1.0) for name, columns in MODELS.items()}
+    fitted = {name: fit_logit(train[columns], train.target, penalty=1.0) for name, columns in models.items()}
     # Keep original-scale and standardized coefficients so the fold's scores can be reproduced.
     for name, params in fitted.items():
         params.update(
-            featureOrder=MODELS[name],
+            featureOrder=models[name],
             refitDate=iso(refit),
             trainingN=len(train),
             trainedFrom=fold['trainStart'],
@@ -124,14 +124,14 @@ def forecasts(raw, base):
     )
 
 
-def evaluation(history, start, end, metric_fn):
+def evaluation(history, start, end, metric_fn, *, predictions=PREDICTIONS, benchmark='existingBlendProbability'):
     window = [] if start is None or end is None else [r for r in history if start <= r['date'] <= end]
-    incumbent = [r for r in window if r['target'] is not None and r['existingBlendProbability'] is not None]
+    incumbent = [r for r in window if r['target'] is not None and r[benchmark] is not None]
     common = [r for r in incumbent if r['commonMature']]
     y = [r['target'] for r in common]
     models = {
         key: metric_fn(y, [r[column] for r in common]) if common else dict(brier=None, logLoss=None, auc=None)
-        for key, column in PREDICTIONS.items()
+        for key, column in predictions.items()
     }
     months = 0 if start is None or end is None else len(pd.date_range(start, end, freq='MS'))
     return dict(

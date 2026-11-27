@@ -375,6 +375,61 @@ export function validateResearchSnapshot(candidate: unknown, base: MacroSnapshot
       }
     }
   }
+  if (base.creditTrial) {
+    const trial = value.creditTrial, current = trial?.latest, lead = value.leadingTrial?.latest;
+    const near = (x: unknown, y: unknown) => typeof x === 'number' && typeof y === 'number' && Math.abs(x-y) < 1e-8;
+    const fields: Record<string,string> = {
+      matchedLevel:'matchedLevelProbability', slowOnly:'slowOnlyProbability', shockOnly:'shockOnlyProbability', candidate:'probability',
+    };
+    if (!current || !lead || trial.spec?.id !== base.creditTrial.spec.id
+      || !['issueDate','featureDate','forecastStart','forecastEnd'].every(key => current[key] === latest[key])
+      || !near(current.baselineProbability, latest.baselineProbability)
+      || !(current.benchmarkProbability === null && lead.permitsBlendProbability === null
+        || near(current.benchmarkProbability,lead.permitsBlendProbability))
+      || !Array.isArray(trial.history) || trial.warnings?.threshold !== .30 || typeof current.available !== 'boolean') {
+      throw new Error('Missing or inconsistent credit dynamics trial');
+    }
+    if (current.available) {
+      if (!lead.available || !['slope','credit','labor','permitGrowth6'].every(k => near(current[k],lead.features[k]))
+        || !near(current.credit,current.creditSlow + current.creditShock)
+        || typeof current.persistent !== 'boolean' || !Number.isFinite(current.creditSlow) || !Number.isFinite(current.creditShock)
+        || !(current.shockThreshold === null ? current.sudden === null
+          : Number.isFinite(current.shockThreshold) && current.sudden === (
+            Number(current.creditShock.toFixed(12)) > Math.max(0,Number(current.shockThreshold.toFixed(12)))))) {
+        throw new Error('Inconsistent credit dynamics signals');
+      }
+      for (const [arm, field] of Object.entries(fields)) {
+        const model = trial.currentModels?.[arm], order = base.creditTrial.spec.models[arm];
+        if (!model || JSON.stringify(model.featureOrder) !== JSON.stringify(order)
+          || !Number.isFinite(model.intercept) || model.refitDate !== current.issueDate
+          || model.trainingCutoff !== monthOffset(current.issueDate,-13)
+          || !isMonth(model.trainedThrough) || model.trainedThrough > model.trainingCutoff
+          || model.lastTargetMonth !== monthOffset(model.trainedThrough,12)
+          || !['means','scales','coefficients'].every(k => Array.isArray(model[k]) && model[k].length === order.length && model[k].every(Number.isFinite))
+          || model.scales.some((v:number) => v <= 0)
+          || !near(current[field],(score(current,model).probability + current.baselineProbability)/2)) {
+          throw new Error('Credit dynamics model parameters or forecasts disagree');
+        }
+      }
+    } else if (Object.values(fields).some(k => current[k] != null)) throw new Error('Unavailable credit dynamics forecast has a value');
+    for (const key of ['all','rolling120']) {
+      const w = trial.warnings.windows?.[key], s = trial.metrics?.[key], groups = trial.warnings.buckets?.[key];
+      if (!w || !s || w.n !== s.n || w.windowStart !== s.windowStart || w.windowEnd !== s.windowEnd
+        || !s.models?.benchmark || !s.models?.candidate || !Array.isArray(groups)
+        || groups.reduce((sum:number,g:{n:number}) => sum + g.n,0) !== s.n
+        || groups.reduce((sum:number,g:{quietN:number}) => sum + g.quietN,0) !== w.quietExpansionN) {
+        throw new Error('Credit dynamics reports require common evaluation months');
+      }
+    }
+    const previous = base.creditTrial.prospective?.receipts;
+    if (previous?.length) {
+      const archive = trial.prospective;
+      if (!archive?.chainValid || !Array.isArray(archive.receipts) || archive.receiptCount !== archive.receipts.length
+        || previous.some((r:{hash:string},i:number) => archive.receipts[i]?.hash !== r.hash)) {
+        throw new Error('Credit dynamics record missing or regressive');
+      }
+    }
+  }
   if (base.prospective) {
     const archive=value.prospective;
     if (!archive || archive.protocolVersion!==base.prospective.protocolVersion || archive.chainValid!==true

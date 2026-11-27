@@ -200,6 +200,10 @@ test('leading-indicator refresh preserves both the current comparisons and their
         pooledPermitsProbability:null, fixedRuleProbability:null,
       });
     }
+    if (unavailable.creditTrial) {
+      Object.assign(unavailable.creditTrial.latest, {available:false,benchmarkProbability:null,
+        probability:null,matchedLevelProbability:null,slowOnlyProbability:null,shockOnlyProbability:null});
+    }
     assert.doesNotThrow(() => validateResearchSnapshot(unavailable, snapshot, now));
   }
   if (snapshot.leadingTrial.prospective?.receiptCount) {
@@ -232,5 +236,25 @@ test('adaptive weights require consistent forecast components, paired warning da
     const missing=structuredClone(snapshot);
     missing.weightTrial.prospective.receipts=[];
     assert.throws(() => validateResearchSnapshot(missing,snapshot,now),/record missing or regressive/);
+  }
+});
+
+test('credit dynamics remote updates retain paired evidence and reproduce the issued forecasts', async () => {
+  const {validateResearchSnapshot} = await import('../lib/live-data.ts');
+  const now = new Date(snapshot.meta.generatedAt);
+  for (const mutate of [
+    d => { delete d.creditTrial; },
+    d => { d.creditTrial.warnings.buckets.all[0].n++; },
+    d => { d.creditTrial.latest.benchmarkProbability = -1; },
+    ...(snapshot.creditTrial.latest.available ? [
+      d => { d.creditTrial.latest.creditShock += .2; },
+      d => { d.creditTrial.latest.probability = -1; },
+      d => { d.creditTrial.latest.sudden = !d.creditTrial.latest.sudden; },
+    ] : []),
+    ...(snapshot.creditTrial.prospective?.receiptCount ? [d => { d.creditTrial.prospective.receipts = []; }] : []),
+  ]) {
+    const invalid = structuredClone(snapshot);
+    mutate(invalid);
+    assert.throws(() => validateResearchSnapshot(invalid,snapshot,now), /credit dynamics/i);
   }
 });

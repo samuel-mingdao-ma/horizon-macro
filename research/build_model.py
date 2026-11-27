@@ -24,6 +24,8 @@ from leading_trial import build_leading_trial
 from onset_diagnostics import build_onset_diagnostics
 from weight_trial import build_weight_trial
 from weight_warning import build_weight_warnings
+from credit_trial import build_credit_trial
+from credit_diagnostics import build_credit_diagnostics
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW = ROOT / 'research' / 'raw'
@@ -428,6 +430,9 @@ def main():
     weights = build_weight_trial(leading, metrics)
     weights['warnings'] = build_weight_warnings(weights, raw['USREC'])
     snapshot['weightTrial'] = weights
+    credit = build_credit_trial(panel, source, leading, fit_logit, score, metrics)
+    credit['warnings'] = build_credit_diagnostics(credit, raw['USREC'])
+    snapshot['creditTrial'] = credit
     # A compact panel with observation-month sources and issue-month lagged inputs.
     download=panel.copy()
     download.index.name='issue_date'
@@ -447,6 +452,8 @@ def main():
     pd.DataFrame(leading['history']).to_csv(ROOT / 'public' / 'data' / 'leading-indicators.csv',
         index=False, float_format='%.12f')
     pd.DataFrame(weights['history']).to_csv(ROOT / 'public' / 'data' / 'adaptive-weights.csv',
+        index=False, float_format='%.12f')
+    pd.DataFrame(credit['history']).to_csv(ROOT / 'public' / 'data' / 'credit-dynamics.csv',
         index=False, float_format='%.12f')
     # Audit trail records the full fold boundary data separately for review.
     (ROOT/'research'/'folds.json').write_text(json.dumps(clean(folds),indent=2))
