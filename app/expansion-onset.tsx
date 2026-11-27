@@ -184,6 +184,9 @@ function Evidence({trial}:{trial:ExpansionTrial}) {
         {m.unknownPhaseN>0 && <> The issue-month phase was unknown for {count(m.unknownPhaseN,'forecast')}.</>}
         {m.incompleteHorizonN>0 && <> The twelve-month horizon lacked complete labels for {count(m.incompleteHorizonN,'expansion issue')}.</>}
         {' '}Of {m.expansionN} eligible expansion issues, {m.n} have paired forecasts and {m.missingCandidateMonths} are missing a candidate. {m.positiveWindows} positive windows cover {count(m.distinctOnsets,'distinct onset')}.</p>
+      {w.expansionAtBothDates && <p>Signals arrive with a two-month lag. In {w.expansionAtBothDates.recessionSignalMonths} of the {m.n} expansion-origin forecasts, the signal month itself was in recession.
+        {w.expansionAtBothDates.unknownSignalMonths > 0 && <> The signal-month phase was unavailable for {w.expansionAtBothDates.unknownSignalMonths} further issues.</>}
+        {' '}Restricting scoring to the {w.expansionAtBothDates.n} issues in expansion at both dates gives a Brier error of {num(w.expansionAtBothDates.benchmark,5)} for the benchmark and {num(w.expansionAtBothDates.candidate,5)} for the onset model. Both forecasts use the original training rule.</p>}
       <div className="on-scroll" tabIndex={0} role="region" aria-label="Model and base rate controls"><table><thead><tr><th scope="col">Forecast components</th><th scope="col">Brier error</th><th scope="col">Log loss</th><th scope="col">AUC</th></tr></thead>
         <tbody>{methods.map(([k,label])=><tr key={k}><th scope="row">{label}</th><td>{num(m.models[k].brier,5)}</td><td>{num(m.models[k].logLoss,5)}</td><td>{num(m.models[k].auc,3)}</td></tr>)}</tbody></table></div>
       <p className="on-note">Each blended forecast assigns half its weight to the signal and half to the base rate. Changing one component at a time shows which part accounts for a change in probability error.</p>

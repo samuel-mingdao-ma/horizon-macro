@@ -50,6 +50,7 @@ export type ExpansionTrial = {
       quietExpansionN: number; preOnsetN: number; completeEpisodes: number; partialEpisodes: number;
       episodes: ExpansionEpisode[];
       summary: Record<Pair, WarningSlice['summary']['candidate']>;
+      expansionAtBothDates?: {n:number;recessionSignalMonths:number;unknownSignalMonths:number;benchmark:Maybe;candidate:Maybe};
       outcomeScores: Record<'quiet' | 'preOnset', {n:number; benchmark:{meanRisk:Maybe;brier:Maybe}; candidate:{meanRisk:Maybe;brier:Maybe}}>;
       comparison: WarningSlice['comparison'];
       alertChanges: { quietRemoved: number; quietAdded: number; preOnsetRemoved: number; preOnsetAdded: number };

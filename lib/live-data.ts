@@ -466,6 +466,11 @@ export function validateResearchSnapshot(candidate: unknown, base: MacroSnapshot
     }
     for (const key of ['all','rolling120']) {
       const s = trial.metrics?.[key], w = trial.warnings?.windows?.[key];
+      const signalCheck = w?.expansionAtBothDates;
+      if (base.expansionTrial.warnings?.windows?.[key]?.expansionAtBothDates && (!signalCheck
+        || signalCheck.n + signalCheck.unknownSignalMonths + signalCheck.recessionSignalMonths !== w.n)) {
+        throw new Error('Expansion-onset signal-month cohort is inconsistent');
+      }
       if (!s || !w || trial.warnings.threshold !== .30 || w.windowStart !== s.windowStart
         || w.windowEnd !== s.windowEnd || w.n !== s.n || w.preOnsetN !== s.positiveWindows
         || w.preOnsetN + w.quietExpansionN !== s.n || w.outcomeScores?.quiet?.n !== w.quietExpansionN

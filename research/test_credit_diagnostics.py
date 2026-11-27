@@ -1,5 +1,5 @@
 import unittest
-from credit_diagnostics import build_credit_diagnostics
+from credit_diagnostics import build_credit_diagnostics, build_expansion_diagnostics
 from test_weight_warning import labels, make_trial
 
 
@@ -33,6 +33,21 @@ class CreditDiagnosticsTests(unittest.TestCase):
         w = build_credit_diagnostics(trial, flags)
         self.assertTrue(w['gate']['passed'])
         self.assertFalse(w['jointGate']['passed'])  # equal false alarms are insufficient
+
+
+class ExpansionDiagnosticsTests(unittest.TestCase):
+    def test_lagged_signal_month_can_still_be_in_recession(self):
+        flags = labels(recessions=[('2001-04', '2001-06')])
+        trial = make_trial(flags, '2001-07', '2001-10')
+        # A missing earlier label affects coverage of the retrospective check, not the issued forecasts.
+        flags = flags.drop('2001-08-01')
+        trial['gate'] = dict(allPassed=False, rolling120Passed=False)
+        for r in trial['history']:
+            r.update(benchmarkProbability=.1, probability=.2)
+        scope = build_expansion_diagnostics(trial, flags)['windows']['all']['expansionAtBothDates']
+        self.assertEqual((scope['recessionSignalMonths'], scope['n'], scope['unknownSignalMonths']), (2, 1, 1))
+        self.assertAlmostEqual(scope['benchmark'], .01)
+        self.assertAlmostEqual(scope['candidate'], .04)
 
 
 if __name__ == '__main__':

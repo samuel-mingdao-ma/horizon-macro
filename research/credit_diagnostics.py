@@ -97,10 +97,25 @@ def build_credit_diagnostics(trial, labels):
 
 def build_expansion_diagnostics(trial, labels):
     report, samples = paired_warning_report(trial, labels)
+    label_by_month = {month.date().isoformat(): value for month, value in labels.dropna().items()}
+    # Phase at the data month is a retrospective diagnostic, never a forecast input or eligibility switch.
+    for row in trial['history']:
+        value = label_by_month.get(row['featureDate'])
+        row['signalMonthRecession'] = int(value) if value is not None else None
     for period, rows in samples.items():
         window = report['windows'][period]
         if window['preOnsetN'] + window['quietExpansionN'] != len(rows):
             raise ValueError('Onset comparisons require retrospectively identified expansion issues')
+        dual_expansion = [r for r in rows if r['signalMonthRecession'] == 0]
+        window['expansionAtBothDates'] = {
+            'n': len(dual_expansion),
+            'recessionSignalMonths': sum(r['signalMonthRecession'] == 1 for r in rows),
+            'unknownSignalMonths': sum(r['signalMonthRecession'] is None for r in rows),
+            **{
+                key: fmean((r[field] - r['target']) ** 2 for r in dual_expansion) if dual_expansion else None
+                for key, field in FORECASTS.items()
+            },
+        }
         window['outcomeScores'] = {}
         for name, target in [('quiet', 0), ('preOnset', 1)]:
             group = [r for r in rows if r['target'] == target]
