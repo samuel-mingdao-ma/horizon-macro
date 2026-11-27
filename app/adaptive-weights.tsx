@@ -669,7 +669,8 @@ function Methods({ trial, period }: { trial: WeightTrial; period: WeightWindow }
       <p className="li-note">
         The replay uses revised economic data and retrospective recession dates. Twelve-month targets overlap.
         The two time periods share observations, and a single downturn can generate many positive forecasts.{' '}
-        <a href="#leading">Inspect the earlier permits experiment.</a>
+        <a href="#leading">Inspect the earlier permits experiment.</a>{' '}
+        <a href="#credit">Compare persistent and sudden credit tightening.</a>
       </p>
     </section>
   );

@@ -6,6 +6,10 @@ An updating quantitative research website that asks: **What do the Treasury curv
 
 HORIZON combines public Federal Reserve data, interpretable models, chronological validation, an interactive **Alarm Lab**, and frozen prospective forecast receipts. Its central finding is useful precisely because the proposed credit interaction did not cure the historical false alarm. It is a student research project, not an official Federal Reserve forecast. The website is publicly accessible; its source and refresh history are available on GitHub.
 
+## Credit dynamics
+
+The permits model assigns half its forecast to a ridge-logistic signal and half to the expanding historical base rate. A new trial splits credit into its trailing level and its latest change while keeping this blend fixed. The November 2026 replay removed two quiet-expansion alerts across 430 mature issues. All three other alert changes occurred during the 2007–09 recession. The recent decade had identical alarm decisions and higher probability error for the split model. Each issue, model control, credit state and forecast record can be inspected or downloaded. [Credit dynamics](https://horizon-macro-observatory.samel23.chatgpt.site/#credit)
+
 ## What the project demonstrates
 
 - A focused economic question with an explicitly defined forecast target.
