@@ -1,6 +1,6 @@
 {
   "mode": "fred-api",
-  "checkedAt": "2026-11-27T22:07:45.775915+00:00",
+  "checkedAt": "2026-11-27T22:09:51.421871+00:00",
   "note": "All source observations downloaded directly from FRED. Labels remain available only through the published USREC cutoff.",
   "perSeries": {
     "PERMIT": {
@@ -10,9 +10,9 @@
       "verifiedProviderLastDate": "2026-10-01",
       "refreshed": true,
       "latestObservationFromCache": false,
-      "cacheOriginalRetrievedAt": "2026-11-27T16:16:11.250150+00:00",
-      "sourceRetrievedAt": "2026-11-27T22:07:45.775915+00:00",
-      "providerRetrievedAt": "2026-11-27T22:07:45.775915+00:00"
+      "cacheOriginalRetrievedAt": "2026-11-27T22:07:45.775915+00:00",
+      "sourceRetrievedAt": "2026-11-27T22:09:51.421871+00:00",
+      "providerRetrievedAt": "2026-11-27T22:09:51.421871+00:00"
     },
     "ICSA": {
       "mode": "fred-api",
@@ -21,9 +21,9 @@
       "verifiedProviderLastDate": "2026-11-21",
       "refreshed": true,
       "latestObservationFromCache": false,
-      "cacheOriginalRetrievedAt": "2026-11-27T16:16:11.250150+00:00",
-      "sourceRetrievedAt": "2026-11-27T22:07:45.775915+00:00",
-      "providerRetrievedAt": "2026-11-27T22:07:45.775915+00:00"
+      "cacheOriginalRetrievedAt": "2026-11-27T22:07:45.775915+00:00",
+      "sourceRetrievedAt": "2026-11-27T22:09:51.421871+00:00",
+      "providerRetrievedAt": "2026-11-27T22:09:51.421871+00:00"
     },
     "GS10": {
       "mode": "fred-api",
@@ -32,9 +32,9 @@
       "verifiedProviderLastDate": "2026-10-01",
       "refreshed": true,
       "latestObservationFromCache": false,
-      "cacheOriginalRetrievedAt": "2026-11-27T16:16:11.250150+00:00",
-      "sourceRetrievedAt": "2026-11-27T22:07:45.775915+00:00",
-      "providerRetrievedAt": "2026-11-27T22:07:45.775915+00:00"
+      "cacheOriginalRetrievedAt": "2026-11-27T22:07:45.775915+00:00",
+      "sourceRetrievedAt": "2026-11-27T22:09:51.421871+00:00",
+      "providerRetrievedAt": "2026-11-27T22:09:51.421871+00:00"
     },
     "TB3MS": {
       "mode": "fred-api",
@@ -43,9 +43,9 @@
       "verifiedProviderLastDate": "2026-10-01",
       "refreshed": true,
       "latestObservationFromCache": false,
-      "cacheOriginalRetrievedAt": "2026-11-27T16:16:11.250150+00:00",
-      "sourceRetrievedAt": "2026-11-27T22:07:45.775915+00:00",
-      "providerRetrievedAt": "2026-11-27T22:07:45.775915+00:00"
+      "cacheOriginalRetrievedAt": "2026-11-27T22:07:45.775915+00:00",
+      "sourceRetrievedAt": "2026-11-27T22:09:51.421871+00:00",
+      "providerRetrievedAt": "2026-11-27T22:09:51.421871+00:00"
     },
     "NFCICREDIT": {
       "mode": "fred-api",
@@ -54,9 +54,9 @@
       "verifiedProviderLastDate": "2026-11-20",
       "refreshed": true,
       "latestObservationFromCache": false,
-      "cacheOriginalRetrievedAt": "2026-11-27T16:16:11.250150+00:00",
-      "sourceRetrievedAt": "2026-11-27T22:07:45.775915+00:00",
-      "providerRetrievedAt": "2026-11-27T22:07:45.775915+00:00"
+      "cacheOriginalRetrievedAt": "2026-11-27T22:07:45.775915+00:00",
+      "sourceRetrievedAt": "2026-11-27T22:09:51.421871+00:00",
+      "providerRetrievedAt": "2026-11-27T22:09:51.421871+00:00"
     },
     "UNRATE": {
       "mode": "fred-api",
@@ -65,9 +65,9 @@
       "verifiedProviderLastDate": "2026-10-01",
       "refreshed": true,
       "latestObservationFromCache": false,
-      "cacheOriginalRetrievedAt": "2026-11-27T16:16:11.250150+00:00",
-      "sourceRetrievedAt": "2026-11-27T22:07:45.775915+00:00",
-      "providerRetrievedAt": "2026-11-27T22:07:45.775915+00:00"
+      "cacheOriginalRetrievedAt": "2026-11-27T22:07:45.775915+00:00",
+      "sourceRetrievedAt": "2026-11-27T22:09:51.421871+00:00",
+      "providerRetrievedAt": "2026-11-27T22:09:51.421871+00:00"
     },
     "USREC": {
       "mode": "fred-api",
@@ -76,9 +76,9 @@
       "verifiedProviderLastDate": "2026-10-01",
       "refreshed": true,
       "latestObservationFromCache": false,
-      "cacheOriginalRetrievedAt": "2026-11-27T16:16:11.250150+00:00",
-      "sourceRetrievedAt": "2026-11-27T22:07:45.775915+00:00",
-      "providerRetrievedAt": "2026-11-27T22:07:45.775915+00:00"
+      "cacheOriginalRetrievedAt": "2026-11-27T22:07:45.775915+00:00",
+      "sourceRetrievedAt": "2026-11-27T22:09:51.421871+00:00",
+      "providerRetrievedAt": "2026-11-27T22:09:51.421871+00:00"
     },
     "CPIAUCSL": {
       "mode": "fred-api",
@@ -87,9 +87,9 @@
       "verifiedProviderLastDate": "2026-10-01",
       "refreshed": true,
       "latestObservationFromCache": false,
-      "cacheOriginalRetrievedAt": "2026-11-27T16:16:11.250150+00:00",
-      "sourceRetrievedAt": "2026-11-27T22:07:45.775915+00:00",
-      "providerRetrievedAt": "2026-11-27T22:07:45.775915+00:00"
+      "cacheOriginalRetrievedAt": "2026-11-27T22:07:45.775915+00:00",
+      "sourceRetrievedAt": "2026-11-27T22:09:51.421871+00:00",
+      "providerRetrievedAt": "2026-11-27T22:09:51.421871+00:00"
     },
     "FEDFUNDS": {
       "mode": "fred-api",
@@ -98,9 +98,9 @@
       "verifiedProviderLastDate": "2026-10-01",
       "refreshed": true,
       "latestObservationFromCache": false,
-      "cacheOriginalRetrievedAt": "2026-11-27T16:16:11.250150+00:00",
-      "sourceRetrievedAt": "2026-11-27T22:07:45.775915+00:00",
-      "providerRetrievedAt": "2026-11-27T22:07:45.775915+00:00"
+      "cacheOriginalRetrievedAt": "2026-11-27T22:07:45.775915+00:00",
+      "sourceRetrievedAt": "2026-11-27T22:09:51.421871+00:00",
+      "providerRetrievedAt": "2026-11-27T22:09:51.421871+00:00"
     },
     "GS1": {
       "mode": "fred-api",
@@ -109,9 +109,9 @@
       "verifiedProviderLastDate": "2026-10-01",
       "refreshed": true,
       "latestObservationFromCache": false,
-      "cacheOriginalRetrievedAt": "2026-11-27T16:16:11.250150+00:00",
-      "sourceRetrievedAt": "2026-11-27T22:07:45.775915+00:00",
-      "providerRetrievedAt": "2026-11-27T22:07:45.775915+00:00"
+      "cacheOriginalRetrievedAt": "2026-11-27T22:07:45.775915+00:00",
+      "sourceRetrievedAt": "2026-11-27T22:09:51.421871+00:00",
+      "providerRetrievedAt": "2026-11-27T22:09:51.421871+00:00"
     },
     "GS2": {
       "mode": "fred-api",
@@ -120,9 +120,9 @@
       "verifiedProviderLastDate": "2026-10-01",
       "refreshed": true,
       "latestObservationFromCache": false,
-      "cacheOriginalRetrievedAt": "2026-11-27T16:16:11.250150+00:00",
-      "sourceRetrievedAt": "2026-11-27T22:07:45.775915+00:00",
-      "providerRetrievedAt": "2026-11-27T22:07:45.775915+00:00"
+      "cacheOriginalRetrievedAt": "2026-11-27T22:07:45.775915+00:00",
+      "sourceRetrievedAt": "2026-11-27T22:09:51.421871+00:00",
+      "providerRetrievedAt": "2026-11-27T22:09:51.421871+00:00"
     },
     "GS5": {
       "mode": "fred-api",
@@ -131,9 +131,9 @@
       "verifiedProviderLastDate": "2026-10-01",
       "refreshed": true,
       "latestObservationFromCache": false,
-      "cacheOriginalRetrievedAt": "2026-11-27T16:16:11.250150+00:00",
-      "sourceRetrievedAt": "2026-11-27T22:07:45.775915+00:00",
-      "providerRetrievedAt": "2026-11-27T22:07:45.775915+00:00"
+      "cacheOriginalRetrievedAt": "2026-11-27T22:07:45.775915+00:00",
+      "sourceRetrievedAt": "2026-11-27T22:09:51.421871+00:00",
+      "providerRetrievedAt": "2026-11-27T22:09:51.421871+00:00"
     },
     "GS30": {
       "mode": "fred-api",
@@ -142,9 +142,9 @@
       "verifiedProviderLastDate": "2026-10-01",
       "refreshed": true,
       "latestObservationFromCache": false,
-      "cacheOriginalRetrievedAt": "2026-11-27T16:16:11.250150+00:00",
-      "sourceRetrievedAt": "2026-11-27T22:07:45.775915+00:00",
-      "providerRetrievedAt": "2026-11-27T22:07:45.775915+00:00"
+      "cacheOriginalRetrievedAt": "2026-11-27T22:07:45.775915+00:00",
+      "sourceRetrievedAt": "2026-11-27T22:09:51.421871+00:00",
+      "providerRetrievedAt": "2026-11-27T22:09:51.421871+00:00"
     }
   }
 }
