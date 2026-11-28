@@ -40,6 +40,7 @@ jobs:
             data/expansion-receipts.jsonl
             data/momentum-receipts.jsonl
             data/confirmation-receipts.jsonl
+            data/curve-legs-receipts.jsonl
             research/prospective-protocol.json
             public/data/
             research/raw/
@@ -49,7 +50,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/snapshot.json data/forecast-ledger.jsonl data/rate-path-receipts.jsonl data/regime-receipts.jsonl data/leading-receipts.jsonl data/weight-receipts.jsonl data/credit-receipts.jsonl data/expansion-receipts.jsonl data/momentum-receipts.jsonl data/confirmation-receipts.jsonl public/data research/raw research/provider-cache research/prospective-protocol.json
+          git add data/snapshot.json data/forecast-ledger.jsonl data/rate-path-receipts.jsonl data/regime-receipts.jsonl data/leading-receipts.jsonl data/weight-receipts.jsonl data/credit-receipts.jsonl data/expansion-receipts.jsonl data/momentum-receipts.jsonl data/confirmation-receipts.jsonl data/curve-legs-receipts.jsonl public/data research/raw research/provider-cache research/prospective-protocol.json
           if git diff --cached --quiet; then
             echo "No research changes."
           else

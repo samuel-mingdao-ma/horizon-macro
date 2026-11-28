@@ -218,6 +218,10 @@ test('leading-indicator refresh preserves both the current comparisons and their
       Object.assign(unavailable.confirmationTrial.latest,{available:false,probability:null,change1m:null,change3m:null,
         levelAlert:null,quarterAlert:null,pressureAlert:null,directionAlert:null,breadthAlert:null});
     }
+    if (unavailable.curveLegsTrial) {
+      Object.assign(unavailable.curveLegsTrial.latest,{available:false,probability:null,change1m:null,change3m:null,levelAlert:null,
+        quarterAlert:null,shortLeadAlert:null,bearAlert:null,sustainedAlert:null,mixedTwoToOneAlert:null});
+    }
     assert.doesNotThrow(() => validateResearchSnapshot(unavailable, snapshot, now));
   }
   if (snapshot.leadingTrial.prospective?.receiptCount) {
@@ -335,5 +339,25 @@ test('signal confirmation verifies votes, decisions, case attributions, cohorts 
     const invalid = structuredClone(snapshot);
     mutate(invalid);
     assert.throws(() => validateResearchSnapshot(invalid,snapshot,new Date(snapshot.meta.generatedAt)), /signal confirmation/i);
+  }
+});
+
+test('Treasury yield legs preserve input dates, signed changes, advance declarations and held-out receipts', async () => {
+  const {validateResearchSnapshot} = await import('../lib/live-data.ts');
+  for (const mutate of [
+    d => { delete d.curveLegsTrial; },
+    d => { d.curveLegsTrial.spec.postHocRules = []; },
+    d => { d.curveLegsTrial.latest.yieldPath[0].date = d.latest.issueDate; },
+    d => { d.curveLegsTrial.history[77].shortStart += .01; },
+    d => { d.curveLegsTrial.history[77].mixedTwoToOneAlert = !d.curveLegsTrial.history[77].mixedTwoToOneAlert; },
+    d => { d.curveLegsTrial.windows.all.probabilityScores.brier += .01; },
+    d => { d.curveLegsTrial.windows.rolling120.changes.shortLead.quietDates.push('2000-05-01'); },
+    d => { d.curveLegsTrial.gate.mixedTwoToOne.passed = !d.curveLegsTrial.gate.mixedTwoToOne.passed; },
+    ...(snapshot.curveLegsTrial.caseEffects['2000-05-01'] ? [d => { d.curveLegsTrial.caseEffects['2000-05-01'].shortEffect += .02; }] : []),
+    ...(snapshot.curveLegsTrial.prospective?.receiptCount ? [d => { d.curveLegsTrial.prospective.receipts=[]; }] : []),
+  ]) {
+    const invalid = structuredClone(snapshot);
+    mutate(invalid);
+    assert.throws(() => validateResearchSnapshot(invalid,snapshot,new Date(snapshot.meta.generatedAt)), /yield curve legs/i);
   }
 });

@@ -242,53 +242,16 @@ function validateMomentum(value: MacroSnapshot, previous: MacroSnapshot): void {
   }
 }
 
-/** Validate the confirmation votes against the same months and probabilities used by the pace replay. */
-function validateConfirmation(value: MacroSnapshot, previous: MacroSnapshot): void {
-  const trial = value.confirmationTrial, pace = value.momentumTrial, expansion = value.expansionTrial;
-  const fail = (detail: string): never => { throw new Error('Signal confirmation ' + detail); };
-  const rules = ['pressure','direction','breadth'];
-  const methods = ['level','quarter',...rules];
-  const same = (a: unknown,b: unknown) => a === b ||
-    (typeof a === 'number' && typeof b === 'number' && Math.abs(a-b) < 1e-9);
-  if (!trial?.latest || trial.spec?.id !== previous.spec.id || trial.spec.parentId !== pace?.spec?.id
-    || trial.spec.threshold !== .3 || trial.spec.featureLagMonths !== 2 || trial.spec.signalLookbackMonths !== 3
-    || !Array.isArray(trial.history) || trial.history.length !== pace.history.length) fail('is missing or misaligned');
+function replayEqual(a: unknown,b: unknown): boolean {
+  return a === b || (typeof a === 'number' && typeof b === 'number' && Math.abs(a-b) < 1e-9);
+}
 
-  const origins = new Map<string,MacroSnapshot>(expansion.history.map((r: MacroSnapshot) => [r.date,r]));
-  function verifyIssue(date: string, r: MacroSnapshot, p: MacroSnapshot, source: MacroSnapshot) {
-    const prior = origins.get(monthOffset(date,-3));
-    if (!['featureDate','refitDate','levelAlert','quarterAlert','probability','change1m','change3m'].every(k => same(r[k],p[k]))
-      || r.lagFeatureDate !== monthOffset(date,-5)) fail('disagrees with the parent alarm or feature dates');
-    for (const [signal,lag] of [['permitGrowth6','lagPermitGrowth6'],['claimsGrowth12','lagClaimsGrowth12'],['credit','lagCredit']]) {
-      if (!same(r[signal],source[signal]) || !same(r[lag],prior?.[signal] ?? null)) fail('uses different economic inputs');
-    }
-    const higher = (a: number | null, b: number | null) => a === null || b === null ? null : a > b;
-    const votes = {
-      permitsNegative:higher(0,r.permitGrowth6), claimsPositive:higher(r.claimsGrowth12,0),
-      creditTightening:higher(r.credit,r.lagCredit), permitsSlowing:higher(r.lagPermitGrowth6,r.permitGrowth6),
-      claimsRising:higher(r.claimsGrowth12,r.lagClaimsGrowth12),
-    };
-    const count = (v: (boolean|null)[]) => v.includes(null) ? null : v.filter(x => x).length;
-    const pressure = count([votes.permitsNegative,votes.claimsPositive,votes.creditTightening]);
-    const direction = count([votes.permitsSlowing,votes.claimsRising,votes.creditTightening]);
-    const alert = (passes: boolean) => p.levelAlert === null ? null : p.levelAlert || (p.quarterAlert && passes);
-    if (Object.entries(votes).some(([k,v]) => r[k] !== v) || r.pressureVotes !== pressure || r.directionVotes !== direction
-      || r.pressureAlert !== alert(pressure === 3) || r.directionAlert !== alert(direction === 3)
-      || r.breadthAlert !== alert(pressure !== null && pressure >= 2)) fail('votes or warning decisions disagree with inputs');
-  }
-  const current = trial.latest;
-  if (!['issueDate','forecastStart','forecastEnd','available'].every(k => current[k] === pace.latest[k]))
-    fail('has an inconsistent live issue');
-  verifyIssue(current.issueDate,current,pace.latest,expansion.latest);
-  trial.history.forEach((r: MacroSnapshot,i: number) => {
-    const p = pace.history[i];
-    if (!['date','commonMature','target','issuePhase','onsetDate'].every(k => r[k] === p[k])) fail('changed the evaluation cohort');
-    verifyIssue(r.date,r,p,expansion.history[i]);
-  });
+function validateOverlayResults(trial: MacroSnapshot, pace: MacroSnapshot, previous: MacroSnapshot, rules: string[], fail: (detail: string) => never): void {
+  const methods = ['level','quarter',...rules];
   for (const key of ['all','rolling120']) {
     const w = trial.windows?.[key], reference = pace.windows[key];
     if (!w || !['windowStart','windowEnd','n','quietExpansionN','preOnsetN','completeEpisodes'].every(k => w[k] === reference[k])
-      || !Array.isArray(w.episodes) || !['brier','auc','logLoss'].every(k => same(w.probabilityScores?.[k],reference.probabilityScores[k])))
+      || !Array.isArray(w.episodes) || !['brier','auc','logLoss'].every(k => replayEqual(w.probabilityScores?.[k],reference.probabilityScores[k])))
       fail('has inconsistent denominators or probability scores');
     const paired: MacroSnapshot[] = trial.history.filter((r: MacroSnapshot) => r.commonMature && r.date >= w.windowStart && r.date <= w.windowEnd);
     for (const method of methods) {
@@ -315,13 +278,6 @@ function validateConfirmation(value: MacroSnapshot, previous: MacroSnapshot): vo
       || gate.passed !== (kept && full.sufficient && recent.sufficient && gate.maintainedHitsBoth && gate.allNoAddedFalse && gate.rolling120NoAddedFalse))
       fail('reports an inconsistent joint test');
   }
-  for (const date of ['2000-05-01','2019-02-01']) {
-    const parts = trial.caseAttribution?.[date], p = pace.history.find((r: MacroSnapshot) => r.date === date);
-    if (parts === null && !p?.paceAvailable) continue;
-    if (!p || !parts || !same(parts.startRisk,p.lag3Probability) || !same(parts.endRisk,p.probability)
-      || !same(parts.change,p.change3m) || !parts.effects || !same(parts.change,
-        ['slope','credit','labor','permitGrowth6'].reduce((sum,k) => sum + parts.effects[k],0))) fail('risk contributions do not reconcile');
-  }
   const archive = trial.prospective;
   if (archive || previous.prospective?.receiptCount) {
     if (!archive?.chainValid || !Array.isArray(archive.receipts) || archive.receiptCount !== archive.receipts.length
@@ -329,6 +285,123 @@ function validateConfirmation(value: MacroSnapshot, previous: MacroSnapshot): vo
       || archive.receiptCount !== archive.pendingCount + archive.maturedCount + archive.excludedCount
       || previous.prospective?.receipts?.some((r: MacroSnapshot,i: number) => r.hash !== archive.receipts[i]?.hash))
       fail('has missing or regressive frozen records');
+  }
+}
+
+/** Validate the confirmation votes against the same months and probabilities used by the pace replay. */
+function validateConfirmation(value: MacroSnapshot, previous: MacroSnapshot): void {
+  const trial = value.confirmationTrial, pace = value.momentumTrial, expansion = value.expansionTrial;
+  const fail = (detail: string): never => { throw new Error('Signal confirmation ' + detail); };
+  const rules = ['pressure','direction','breadth'];
+  if (!trial?.latest || trial.spec?.id !== previous.spec.id || trial.spec.parentId !== pace?.spec?.id
+    || trial.spec.threshold !== .3 || trial.spec.featureLagMonths !== 2 || trial.spec.signalLookbackMonths !== 3
+    || !Array.isArray(trial.history) || trial.history.length !== pace.history.length) fail('is missing or misaligned');
+
+  const origins = new Map<string,MacroSnapshot>(expansion.history.map((r: MacroSnapshot) => [r.date,r]));
+  function verifyIssue(date: string, r: MacroSnapshot, p: MacroSnapshot, source: MacroSnapshot) {
+    const prior = origins.get(monthOffset(date,-3));
+    if (!['featureDate','refitDate','levelAlert','quarterAlert','probability','change1m','change3m'].every(k => replayEqual(r[k],p[k]))
+      || r.lagFeatureDate !== monthOffset(date,-5)) fail('disagrees with the parent alarm or feature dates');
+    for (const [signal,lag] of [['permitGrowth6','lagPermitGrowth6'],['claimsGrowth12','lagClaimsGrowth12'],['credit','lagCredit']]) {
+      if (!replayEqual(r[signal],source[signal]) || !replayEqual(r[lag],prior?.[signal] ?? null)) fail('uses different economic inputs');
+    }
+    const higher = (a: number | null, b: number | null) => a === null || b === null ? null : a > b;
+    const votes = {
+      permitsNegative:higher(0,r.permitGrowth6), claimsPositive:higher(r.claimsGrowth12,0),
+      creditTightening:higher(r.credit,r.lagCredit), permitsSlowing:higher(r.lagPermitGrowth6,r.permitGrowth6),
+      claimsRising:higher(r.claimsGrowth12,r.lagClaimsGrowth12),
+    };
+    const count = (v: (boolean|null)[]) => v.includes(null) ? null : v.filter(x => x).length;
+    const pressure = count([votes.permitsNegative,votes.claimsPositive,votes.creditTightening]);
+    const direction = count([votes.permitsSlowing,votes.claimsRising,votes.creditTightening]);
+    const alert = (passes: boolean) => p.levelAlert === null ? null : p.levelAlert || (p.quarterAlert && passes);
+    if (Object.entries(votes).some(([k,v]) => r[k] !== v) || r.pressureVotes !== pressure || r.directionVotes !== direction
+      || r.pressureAlert !== alert(pressure === 3) || r.directionAlert !== alert(direction === 3)
+      || r.breadthAlert !== alert(pressure !== null && pressure >= 2)) fail('votes or warning decisions disagree with inputs');
+  }
+  const current = trial.latest;
+  if (!['issueDate','forecastStart','forecastEnd','available'].every(k => current[k] === pace.latest[k]))
+    fail('has an inconsistent live issue');
+  verifyIssue(current.issueDate,current,pace.latest,expansion.latest);
+  trial.history.forEach((r: MacroSnapshot,i: number) => {
+    const p = pace.history[i];
+    if (!['date','commonMature','target','issuePhase','onsetDate'].every(k => r[k] === p[k])) fail('changed the evaluation cohort');
+    verifyIssue(r.date,r,p,expansion.history[i]);
+  });
+  validateOverlayResults(trial,pace,previous,rules,fail);
+  for (const date of ['2000-05-01','2019-02-01']) {
+    const parts = trial.caseAttribution?.[date], p = pace.history.find((r: MacroSnapshot) => r.date === date);
+    if (parts === null && !p?.paceAvailable) continue;
+    if (!p || !parts || !replayEqual(parts.startRisk,p.lag3Probability) || !replayEqual(parts.endRisk,p.probability)
+      || !replayEqual(parts.change,p.change3m) || !parts.effects || !replayEqual(parts.change,
+        ['slope','credit','labor','permitGrowth6'].reduce((sum,k) => sum + parts.effects[k],0))) fail('risk contributions do not reconcile');
+  }
+}
+
+function validateCurveLegs(value: MacroSnapshot, previous: MacroSnapshot): void {
+  const trial = value.curveLegsTrial, pace = value.momentumTrial, expansion = value.expansionTrial;
+  const fail = (detail: string): never => { throw new Error('Yield curve legs ' + detail); };
+  const rules = ['shortLead','bear','sustained','mixedTwoToOne'];
+  const spec = trial?.spec;
+  if (!trial?.latest || spec?.id !== previous.spec.id || spec.parentId !== pace?.spec?.id
+    || spec.shortSeries !== 'TB3MS' || spec.longSeries !== 'GS10' || spec.lookbackMonths !== 3
+    || spec.threshold !== .30 || spec.featureLagMonths !== 2
+    || JSON.stringify(spec.preReplayRules) !== JSON.stringify(rules.slice(0,3))
+    || JSON.stringify(spec.postHocRules) !== JSON.stringify(['mixedTwoToOne'])
+    || !Array.isArray(trial.history) || trial.history.length !== pace.history.length) fail('has an inconsistent design or cohort');
+
+  const suffixes = ['Start','Step1','Step2','End'];
+  // The same observation month must carry the same vintage throughout this replay.
+  const observations = new Map<string, [number|null,number|null]>();
+  const diff = (a: number|null,b: number|null) => a === null || b === null ? null : a-b;
+  const asRate = (u: number|null) => u === null ? null : u / 1e12;
+  function verify(r: MacroSnapshot,p: MacroSnapshot,source: MacroSnapshot,live: boolean) {
+    const date = live ? r.issueDate : r.date;
+    const shape = live ? ['issueDate','forecastStart','forecastEnd','available'] : ['date','target','commonMature','issuePhase','onsetDate'];
+    if (!shape.every(k => r[k] === p[k]) || !['featureDate','refitDate','probability','change1m','change3m','levelAlert','quarterAlert'].every(k => replayEqual(r[k],p[k]))
+      || r.lagFeatureDate !== monthOffset(date,-5) || (live && (!Array.isArray(r.yieldPath) || r.yieldPath.length !== 4))) fail('does not reproduce the parent issue');
+    const bills: (number|null)[] = [];
+    const bonds: (number|null)[] = [];
+    for (let i=0; i<4; i++) {
+      const observation = monthOffset(date,i-5);
+      const bill = r['short'+suffixes[i]], bond = r['long'+suffixes[i]];
+      if (![bill,bond].every(x => x === null || Number.isFinite(x))) fail('has an invalid yield');
+      const saved = observations.get(observation);
+      if (saved && (saved[0] !== bill || saved[1] !== bond)) fail('assigns two values to the same monthly rate');
+      observations.set(observation,[bill,bond]);
+      if (live && (r.yieldPath[i]?.date !== observation || r.yieldPath[i].shortYield !== bill || r.yieldPath[i].longYield !== bond)) fail('misdates a frozen yield');
+      bills.push(bill === null ? null : Math.round(bill*1e12));
+      bonds.push(bond === null ? null : Math.round(bond*1e12));
+    }
+    const s = diff(bills[3],bills[0]), l = diff(bonds[3],bonds[0]), f = diff(s,l);
+    const start = diff(bonds[0],bills[0]), end = diff(bonds[3],bills[3]);
+    const rises = bills.includes(null) ? null : bills.slice(1).filter((b,i) => b! > bills[i]!).length;
+    const driver = f === null ? 'unavailable' : f <= 0 ? 'no-flattening' : s! > -l! ? 'short-led' : s! < -l! ? 'long-led' : 'equal';
+    const pattern = f === null || f <= 0 ? driver : l! > 0 ? 'long-rise-offset' : s! < 0 ? 'short-fall-offset' : l === 0 ? 'short-only' : s === 0 ? 'long-only' : 'both-flatten';
+    if (![ [r.shortChange,s],[r.longChange,l],[r.flattening,f],[r.startSlope,start],[r.endSlope,end] ].every(([v,u]) => replayEqual(v,asRate(u)))
+      || (end !== null && source.slope !== null && !replayEqual(asRate(end),source.slope))
+      || r.driver !== driver || r.pattern !== pattern || r.shortRiseCount !== rises) fail('decomposition disagrees with observed rates');
+    const led = f === null ? null : f>0 && s!>0 && s! > -l!;
+    const eligible = [led, led === null ? null : led && l!>=0, led === null || rises === null ? null : led && rises===3,
+      f === null ? null : f>0 && s!>0 && l!<=0 && s! >= -2*l!];
+    rules.forEach((k,i) => {
+      if (r[k] !== eligible[i] || r[k+'Alert'] !== (p.levelAlert === null ? null : p.levelAlert || (p.quarterAlert && eligible[i] === true)))
+        fail('warning decisions disagree with the two yields');
+    });
+  }
+  trial.history.forEach((r: MacroSnapshot,i: number) => verify(r,pace.history[i],expansion.history[i],false));
+  verify(trial.latest,pace.latest,expansion.latest,true);
+  validateOverlayResults(trial,pace,previous,rules,fail);
+  for (const date of ['2000-05-01','2019-02-01']) {
+    const effect = trial.caseEffects?.[date], original = value.confirmationTrial.caseAttribution[date];
+    const row = trial.history.find((r: MacroSnapshot) => r.date === date);
+    if (!row || !original || !(row.flattening > 0)) {
+      if (effect !== null) fail('has unsupported risk attribution');
+      continue;
+    }
+    const curve = original.effects.slope;
+    if (!effect || !replayEqual(effect.curveEffect,curve) || !replayEqual(effect.shortEffect,curve*row.shortChange/row.flattening)
+      || !replayEqual(effect.longEffect,-curve*row.longChange/row.flattening)) fail('risk attribution does not add up');
   }
 }
 
@@ -676,6 +749,7 @@ export function validateResearchSnapshot(candidate: unknown, base: MacroSnapshot
   }
   if (base.momentumTrial) validateMomentum(value, base.momentumTrial);
   if (base.confirmationTrial) validateConfirmation(value, base.confirmationTrial);
+  if (base.curveLegsTrial) validateCurveLegs(value, base.curveLegsTrial);
   if (base.prospective) {
     const archive=value.prospective;
     if (!archive || archive.protocolVersion!==base.prospective.protocolVersion || archive.chainValid!==true
