@@ -202,7 +202,7 @@ export default function JointStress({trial}:{trial?:JointStressTrial}) {
       <p>At each issue, the ten-year Treasury and three-month bill can move independently at each of four consecutive signal dates. The spread changes the fitted expansion model’s log odds. Repricing all four probabilities with the issue’s own coefficients and base rate gives new one- and three-month changes.</p>
       <p>At or above 30%, the alarm turns on. Below 30%, risk must reach 20%, rise over one and three months, and reach 30% if the three-month rise repeats. The bill must also rise and the spread narrow. A ten-year move within ±5 bp qualifies as flat. For a larger decline, the bill must rise by at least twice the decline.</p>
       <p className="li-note">The 2:1 rule was selected after inspecting these historical cases. The replay uses revised inputs and retrospective recession dates. The recent decade overlaps the full sample, and several forecast months can refer to one recession. The stress paths are hypothetical.</p>
-      <div className="js-links"><a href="#stability">Compare the earlier long-end test</a><a href="/api/download?file=stabilityreceipts">Download frozen issued warnings</a></div>
+      <div className="js-links"><a href="#pathsimulation">Estimate how often the early warning holds on simulated yield paths</a><a href="#stability">Compare the earlier long-end test</a><a href="/api/download?file=stabilityreceipts">Download frozen issued warnings</a></div>
     </section>
   </article>;
 }

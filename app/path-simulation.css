@@ -1,0 +1,56 @@
+.ps-view {font-variant-numeric:tabular-nums}
+.ps-view h1 {max-width:20ch}
+.ps-controls {display:flex;align-items:center;flex-wrap:wrap;gap:.5rem 1rem;padding:.9rem 0;border-top:1px solid var(--li-line)}
+.ps-controls label,.ps-controls>span {color:var(--li-text);font-size:.88rem}
+.ps-view select {min-height:39px;max-width:100%;padding:.5rem 2.1rem .5rem .65rem;border:1px solid var(--li-line);border-radius:4px;background:var(--background,#151915);color:var(--li-ink);font:inherit;font-size:.88rem}
+.ps-view :is(select,button,summary,a):focus-visible {outline:2px solid var(--li-green);outline-offset:3px}
+.ps-overview {display:grid;grid-template-columns:minmax(0, .83fr) minmax(0,1.17fr);gap:clamp(1.2rem,4vw,3.3rem);border-top:1px solid var(--li-line);padding:1.9rem 0 2.1rem;align-items:center}
+.ps-overview h2,.ps-funnel figcaption {font-family:var(--font-display);font-weight:500;font-size:1.06rem;letter-spacing:-.025em}
+.ps-result>strong {display:block;font:500 clamp(3.6rem,6.8vw,5.9rem)/1.1 var(--font-display);letter-spacing:-.075em;color:var(--li-green);font-variant-numeric:tabular-nums;margin:.38rem 0 .55rem}
+.ps-result>span {font-size:.91rem;color:var(--li-ink)}
+.ps-result .li-note,.ps-funnel .li-note {font-size:.81rem;line-height:1.5;margin:.45rem 0 0}
+.ps-funnel {margin:0;min-width:0}
+.ps-funnel ol {list-style:none;margin:.55rem 0 0;padding:0}
+.ps-funnel li {margin:.67rem 0}
+.ps-funnel-row {display:flex;align-items:baseline;justify-content:space-between;gap:.6rem;font-size:.86rem}
+.ps-funnel-row span {color:var(--li-text)}
+.ps-funnel-row strong {white-space:nowrap;color:var(--li-ink);font-weight:500}
+.ps-track {height:5px;background:#29332b;margin-top:.26rem}
+.ps-track i {display:block;height:100%;background:#9da99c;transition:width .25s ease}
+.ps-funnel li:last-child .ps-track i {background:var(--li-green)}
+.ps-funnel li:last-child .ps-funnel-row strong {color:var(--li-green)}
+.ps-view table {min-width:480px}
+.ps-view table th small,.ps-view table td small {display:block;font-size:.76rem;color:var(--li-muted);font-weight:400}
+.ps-view :is(th,td) {padding:.59rem .43rem}
+.ps-view table .ps-active {background:rgba(164,200,148,.055)}
+.ps-view table .ps-active th:first-child,.ps-view .ps-num-accent {color:var(--li-green)}
+.ps-view .ps-controls-inline {margin:.65rem 0 .85rem}
+.ps-view .ps-details {margin-top:1rem;color:var(--li-muted)}
+.ps-details summary {cursor:pointer;color:var(--li-green);width:fit-content;font-size:.91rem;padding:.3rem 0}
+.ps-details summary:hover,.ps-view .ps-links a:hover {text-decoration:underline;text-underline-offset:.23em}
+.ps-compare {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.5rem 2rem;margin:.9rem 0 0}
+.ps-compare h3 {font-size:1.05rem;margin:0}
+.ps-compare table {min-width:310px}
+.ps-compare .li-scroll {margin:.4rem 0}
+.ps-compare :is(table th,table td) {font-size:.82rem}
+.ps-view .ps-links {display:flex;flex-wrap:wrap;gap:.4rem 1.15rem;margin-top:.7rem}
+.ps-links a {color:var(--li-green);font-size:.88rem}
+.ps-view .ps-calibration {margin-top:.75rem}
+.ps-calibration table {min-width:315px}
+@media(max-width:850px) {
+  .ps-overview {grid-template-columns:minmax(0,.75fr) minmax(0,1fr);gap:1.1rem}
+  .ps-compare {grid-template-columns:1fr}
+}
+@media(max-width:650px) {
+  .ps-overview {grid-template-columns:1fr;gap:1.4rem;padding:1.3rem 0}
+  .ps-view .li-title,.ps-view .li-section-head {align-items:flex-start}
+  .ps-view .li-section-head {flex-direction:column;gap:.65rem}
+  .ps-view .li-title {padding-bottom:1.25rem;gap:.65rem}
+  .ps-overview .ps-result>strong {font-size:3.8rem}
+  .ps-view .li-controls {flex-wrap:wrap}
+  .ps-view button {min-height:38px}
+}
+@media(prefers-reduced-motion:reduce) {.ps-track i {transition:none}}
+.ps-view .ps-example-controls {margin-top:.65rem;border:0;padding:.3rem 0}
+.ps-view .ps-row-link {color:inherit;text-align:left;font:inherit;border:0;background:transparent;cursor:pointer;padding:.35rem 0;text-decoration:underline;text-decoration-color:var(--li-line);text-underline-offset:.24rem}
+.ps-view .ps-row-link:hover {color:var(--li-green);text-decoration-color:currentColor}

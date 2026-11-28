@@ -30,6 +30,8 @@ from expansion_trial import build_expansion_trial
 from pace_trial import build_pace_trial
 from confirmation_trial import build_confirmation_trial
 from curve_legs import build_curve_legs_trial
+from path_calibration import prepare_calibration
+from path_simulation import build_path_simulation
 from joint_stress import build_joint_stress_trial, joint_stress_csv_rows
 from curve_stability import build_curve_stability_trial, stability_csv_rows
 
@@ -452,6 +454,9 @@ def main():
     snapshot['curveStabilityTrial'] = stability
     joint_stress = build_joint_stress_trial(expansion, momentum, legs)
     snapshot['jointStressTrial'] = joint_stress
+    daily_calibration = prepare_calibration(refresh=refresh, root=ROOT, as_of=asof)
+    snapshot['pathSimulationTrial'] = build_path_simulation(
+        expansion, momentum, legs, daily_calibration, csv_path=ROOT / 'public/data/path-simulation.csv')
     # A compact panel with observation-month sources and issue-month lagged inputs.
     download=panel.copy()
     download.index.name='issue_date'

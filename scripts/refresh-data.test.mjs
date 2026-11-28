@@ -237,6 +237,10 @@ test('leading-indicator refresh preserves both the current comparisons and their
         for (const k of Object.keys(r.witnesses)) r.witnesses[k] = null;
       }
     }
+    if (unavailable.pathSimulationTrial) {
+      Object.assign(unavailable.pathSimulationTrial.latest,{available:false,probability:null});
+      for (const s of unavailable.pathSimulationTrial.scenarios) s.latest = null;
+    }
     assert.doesNotThrow(() => validateResearchSnapshot(unavailable, snapshot, now));
   }
   if (snapshot.leadingTrial.prospective?.receiptCount) {
@@ -410,5 +414,23 @@ test('joint Treasury stress retains its scores, same-path comparisons and dated 
     const invalid = structuredClone(snapshot);
     change(invalid);
     assert.throws(() => validateResearchSnapshot(invalid,snapshot,now), /joint yield stress/i);
+  }
+});
+
+test('yield path simulation checks chronology, proper scores, Monte Carlo counts and joint passage', async () => {
+  const {validateResearchSnapshot} = await import('../lib/live-data.ts');
+  const now = new Date(snapshot.meta.generatedAt);
+  for (const change of [
+    d => { delete d.pathSimulationTrial; },
+    d => { d.pathSimulationTrial.baseline.all.quietAlerts++; },
+    d => { d.pathSimulationTrial.calibration.may2000.end = '2000-04-01'; },
+    d => { d.pathSimulationTrial.scenarios[0].gates.joint.passed++; },
+    d => { d.pathSimulationTrial.scenarios[1].examples[0].mayPath[1].shortBp = 4; },
+    d => { d.pathSimulationTrial.scenarios[0].funnel[3].count++; },
+    d => { d.pathSimulationTrial.scenarios[2].windows.all.logLossDelta[0] += .001; },
+  ]) {
+    const invalid = structuredClone(snapshot);
+    change(invalid);
+    assert.throws(() => validateResearchSnapshot(invalid,snapshot,now), /yield path simulation/i);
   }
 });
