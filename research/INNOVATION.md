@@ -226,3 +226,22 @@ The November 2026 replay spans 430 mature benchmark issues from January 1990 thr
 In the trailing decade Brier fell from 0.169866 to 0.149346 and quiet alerts from 50 to 39 of 106. Retaining the original signal and changing only the prior scored 0.149510. The expansion prior alone scored 0.095605 with zero alerts at 30%. Across the full replay, the onset model outscored the prior alone (0.105300). A secondary scoring check also requires the two-month-lagged signal month to be in expansion, holding the fitted forecasts fixed. This leaves 386 issues overall and 116 recently. Candidate and benchmark Brier errors are respectively 0.09362 and 0.10911 overall, and 0.14859 and 0.16835 recently. These overlapping monthly issues include few independent turning points. Revised macro inputs and retrospective cycle labels limit historical inference.
 
 The cloud research job freezes issue-time model parameters, priors and all five probabilities before the forecast horizon starts. The outcome calculation waits for all 13 labels. It scores expansion origins, counts recession origins separately and leaves incomplete horizons pending. [Interactive replay](https://horizon-macro-observatory.samel23.chatgpt.site/#onset) · [Monthly forecasts](https://horizon-macro-observatory.samel23.chatgpt.site/api/download?file=expansion) · [Prospective archive](https://horizon-macro-observatory.samel23.chatgpt.site/api/download?file=expansionreceipts)
+
+
+## Can accelerating risk recover the lost month before 2001?
+
+The alert decision uses the existing expansion-origin forecast of a new recession in the following twelve months. The baseline sounds at 30%. Both overlays also consider an issue below 30% when risk has reached 20%, the latest month is rising and the change over three months is positive. If the observed average monthly rise takes risk across 30% within another three months, the primary rule alerts. A stricter comparison allows only one month. Both rules were specified before running this replay. The 2001 delay that motivated it was already known. [Interactive risk-momentum study](https://horizon-macro-observatory.samel23.chatgpt.site/#momentum)
+
+Every issue applies its own coefficients and prior to four consecutive months of lagged inputs. This prevents a January refit from creating a jump in the measured pace. All three policies issue the same conditional probability. A missing path falls back to the level alarm when the current probability exists. The first three historical issues have no complete lookback. Historical observations can be revised. Prospective monthly records freeze both the inputs and decisions before the outcome window starts.
+
+| November 2026 replay | Level only | Project three months | Project one month |
+|---|---:|---:|---:|
+| Quiet expansion months alerted, full history | 66 / 351 | 77 / 351 | 72 / 351 |
+| Pre-onset months alerted, full history | 37 / 43 | 38 / 43 | 37 / 43 |
+| Quiet expansion months alerted, recent decade | 39 / 106 | 45 / 106 | 44 / 106 |
+| Pre-onset months alerted, recent decade | 10 / 12 | 10 / 12 | 10 / 12 |
+| First alert before April 2001 onset | 10 months | 11 months | 10 months |
+
+The 394 mature expansion issues have a Brier error of 0.09307 and log loss of 0.31483. The 118 recent mature issues have a Brier error of 0.14935 and log loss of 0.44574. These values coincide across decision rules by construction. The three complete historical episodes had lead times of 10, 12 and 12 months under the level alarm. Only 2001 gained lead with the primary overlay. The recent decade contains one complete episode, already detected at the twelve-month ceiling. The 1990 lead-up is partial. One quiet forecast is counted for each alerted issue whose next twelve months have no recession onset.
+
+May 2000 scored 25.69%, up 7.44 percentage points in one month and 9.30 points in three. In February 2019 all three readings were higher, at 28.60%, +8.89 and +11.10 points. The following onset in March 2020 was thirteen months away. Any deterministic alert using only these readings, with alert status nondecreasing in each, that catches May 2000 also adds at least this quiet month. This argument is specific to the two forecasts, their data vintage and the twelve-month outcome. For a month after the peak as the first recession month, see the series definition. [FRED USREC](https://fred.stlouisfed.org/series/USREC)

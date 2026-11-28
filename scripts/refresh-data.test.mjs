@@ -208,6 +208,12 @@ test('leading-indicator refresh preserves both the current comparisons and their
       Object.assign(unavailable.expansionTrial.latest, {available:false, benchmarkProbability:null,
         rawPermitsProbability:null, probability:null, signalOnlyChangeProbability:null, baseOnlyChangeProbability:null});
     }
+    if (unavailable.momentumTrial) {
+      const c = unavailable.momentumTrial.latest;
+      Object.assign(c,{available:false,probability:null,levelAlert:null,quarterAlert:null,monthAlert:null,
+        paceAvailable:false,change1m:null,change3m:null});
+      c.path[3].probability = null;
+    }
     assert.doesNotThrow(() => validateResearchSnapshot(unavailable, snapshot, now));
   }
   if (snapshot.leadingTrial.prospective?.receiptCount) {
@@ -284,5 +290,24 @@ test('expansion-onset research keeps comparable expansion cohorts and validates 
     const invalid = structuredClone(snapshot);
     mutate(invalid);
     assert.throws(() => validateResearchSnapshot(invalid,snapshot,now), /expansion-onset/i);
+  }
+});
+
+test('risk momentum preserves dated risk paths, decisions and comparable quiet months', async () => {
+  const {validateResearchSnapshot} = await import('../lib/live-data.ts');
+  const corruptions = [
+    d => { delete d.momentumTrial; },
+    d => { d.momentumTrial.spec.projectionMonths.month = 3; },
+    d => { d.momentumTrial.latest.path[0].date = d.momentumTrial.latest.issueDate; },
+    d => { d.momentumTrial.history[0].levelAlert = !d.momentumTrial.history[0].levelAlert; },
+    d => { d.momentumTrial.windows.all.probabilityScores.brier += .01; },
+    d => { d.momentumTrial.windows.all.caseComparison.matches.push({date:'1900-01-01'}); },
+    d => { d.momentumTrial.windows.rolling120.changes.quarter.quietDates.push('2000-05-01'); },
+    ...(snapshot.momentumTrial.prospective?.receiptCount ? [d => { d.momentumTrial.prospective.receipts = []; }] : []),
+  ];
+  for (const mutate of corruptions) {
+    const invalid = structuredClone(snapshot);
+    mutate(invalid);
+    assert.throws(() => validateResearchSnapshot(invalid,snapshot,new Date(snapshot.meta.generatedAt)), /risk momentum/i);
   }
 });

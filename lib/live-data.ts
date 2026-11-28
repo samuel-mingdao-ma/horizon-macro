@@ -150,6 +150,99 @@ export async function refreshSnapshot(base: MacroSnapshot, now = new Date(), loa
 }
 
 /** Validate remote research before allowing it to replace a known bundled build. */
+/** Validate that a refreshed alarm experiment still evaluates the published conditional risks. */
+function validateMomentum(value: MacroSnapshot, previous: MacroSnapshot): void {
+  const t = value.momentumTrial, parent = value.expansionTrial, current = t?.latest;
+  const fail = (why: string): never => { throw new Error('Risk momentum ' + why); };
+  const equalRisk = (a: unknown, b: unknown) => (a === null && b === null)
+    || (typeof a === 'number' && typeof b === 'number' && Math.abs(a - b) < 1e-8);
+  const spec = t?.spec;
+  if (!current || !parent || spec?.id !== previous.spec.id || spec.parentId !== parent.spec.id
+    || spec.warningThreshold !== .3 || spec.momentumFloor !== .2 || spec.lookbackMonths !== 3
+    || spec.projectionMonths?.quarter !== 3 || spec.projectionMonths?.month !== 1
+    || !Array.isArray(t.history) || t.history.length !== parent.history.length
+    || !['issueDate','featureDate','forecastStart','forecastEnd','available','refitDate'].every(k => current[k] === parent.latest[k])
+    || !equalRisk(current.probability, parent.latest.probability)) fail('has an inconsistent forecast or decision definition');
+
+  function checkDecisions(row: MacroSnapshot) {
+    const values = [row.lag3Probability, row.lag2Probability, row.lag1Probability, row.probability];
+    if (!values.every(p => p === null || (Number.isFinite(p) && p >= 0 && p <= 1))) fail('has an invalid risk path');
+    const [start, , last, p] = values.map(n => n === null ? null : Math.round(n * 1e12));
+    const complete = values.every(n => n !== null);
+    const delta = complete ? p! - start! : null;
+    const one = p !== null && last !== null ? p - last : null;
+    const level = p === null ? null : p >= 300e9;
+    const rising = complete && p! >= 200e9 && one! > 0 && delta! > 0;
+    if (row.paceAvailable !== complete || !equalRisk(row.change1m, one === null ? null : one / 1e12)
+      || !equalRisk(row.change3m, delta === null ? null : delta / 1e12)
+      || row.levelAlert !== level || row.quarterAlert !== (level === null ? null : level || rising && p! + delta! >= 300e9)
+      || row.monthAlert !== (level === null ? null : level || rising && 3*p! + delta! >= 900e9)) fail('decisions disagree with the risk path');
+  }
+  checkDecisions(current);
+  if (!Array.isArray(current.path) || current.path.length !== 4) fail('lacks four calendar slots');
+  const featureKeys = ['slope','credit','labor','permitGrowth6','claimsGrowth12'];
+  const parentRows = new Map<string, MacroSnapshot>(parent.history.map((r: MacroSnapshot) => [r.date,r]));
+  current.path.forEach((point: MacroSnapshot, i: number) => {
+    const date = monthOffset(current.issueDate,i-3);
+    const source = i === 3 ? parent.latest : parentRows.get(date);
+    if (point.date !== date || point.featureDate !== monthOffset(date,-2)
+      || !equalRisk(point.probability,[current.lag3Probability,current.lag2Probability,current.lag1Probability,current.probability][i]))
+      fail('has a misdated live lookback');
+    if (current.available) {
+      if (!point.features || !featureKeys.every(k => equalRisk(point.features[k],source?.[k] ?? null))) fail('uses inconsistent monthly inputs');
+      const risk = featureKeys.every(k => Number.isFinite(point.features[k]))
+        ? (score(point.features,parent.currentModel).probability + parent.latest.expansionPriorProbability)/2 : null;
+      if (!equalRisk(point.probability,risk)) fail('lookback disagrees with the frozen fit');
+    }
+  });
+  t.history.forEach((row: MacroSnapshot, i: number) => {
+    const r = parent.history[i];
+    if (!['date','featureDate','refitDate','commonMature','issuePhase','target','onsetDate'].every(k => row[k] === r[k])
+      || !equalRisk(row.probability,r.probability)) fail('replay disagrees with the expansion-origin forecasts');
+    checkDecisions(row);
+  });
+  for (const key of ['all','rolling120']) {
+    const w = t.windows?.[key], ref = parent.metrics[key], alarms = parent.warnings.windows[key];
+    if (!w || !['windowStart','windowEnd','n','quietExpansionN','preOnsetN','completeEpisodes'].every(k => w[k] === alarms[k])
+      || w.summary?.level?.quietAlerts !== alarms.summary.candidate.quietAlerts
+      || !['brier','logLoss','auc'].every(k => equalRisk(w.probabilityScores?.[k],ref.models.candidate[k])))
+      fail('uses different scoring windows or probabilities');
+    const rows: MacroSnapshot[] = t.history.filter((r: MacroSnapshot) => r.commonMature && r.date >= w.windowStart && r.date <= w.windowEnd);
+    const diagnostic = w.caseComparison;
+    const caseRow = t.history.find((r: MacroSnapshot) => r.date === '2000-05-01');
+    if (!Array.isArray(w.episodes) || diagnostic?.date !== '2000-05-01'
+      || typeof diagnostic.available !== 'boolean' || !Array.isArray(diagnostic.matches)
+      || (diagnostic.available && !caseRow?.paceAvailable)) fail('lacks the case comparison');
+    const fields = ['probability','change1m','change3m'];
+    const matches = diagnostic.available ? rows.filter(r => r.target === 0 && r.paceAvailable && !r.levelAlert
+      && fields.every(k => Math.round(r[k] * 1e12) >= Math.round(caseRow[k] * 1e12))) : [];
+    if (matches.length !== diagnostic.matches.length || matches.some((r,i) =>
+      diagnostic.matches[i]?.date !== r.date || fields.some(k => !equalRisk(diagnostic.matches[i][k],r[k]))))
+      fail('quiet case comparisons disagree with the replay');
+    for (const rule of ['quarter','month']) {
+      if (typeof t.gate?.[rule]?.passed !== 'boolean' || !w[rule + 'Comparison']
+        || w.episodes.some((e: MacroSnapshot) => !e.methods?.level || !e.methods?.[rule]))
+        fail('lacks comparable alert timing');
+      const added = rows.filter(r => r[rule + 'Alert'] && !r.levelAlert);
+      for (const [field,target] of [['quietDates',0],['preOnsetDates',1]] as const) {
+        if (JSON.stringify(w.changes?.[rule]?.[field]) !== JSON.stringify(added.filter(r => r.target === target).map(r => r.date)))
+          fail('incremental alert dates disagree with underlying decisions');
+      }
+      if (w.summary[rule].quietAlerts !== w.summary.level.quietAlerts + w.changes[rule].quietDates.length
+        || w.summary[rule].preOnsetAlerts !== w.summary.level.preOnsetAlerts + w.changes[rule].preOnsetDates.length)
+        fail('incremental alert counts are inconsistent');
+    }
+  }
+  const a = t.prospective;
+  if (previous.prospective?.receiptCount || a) {
+    if (!a?.chainValid || !Array.isArray(a.receipts) || a.receipts.length !== a.receiptCount
+      || ![a.pendingCount,a.maturedCount,a.excludedCount].every(n => Number.isInteger(n) && n >= 0)
+      || a.receiptCount !== a.pendingCount + a.maturedCount + a.excludedCount
+      || previous.prospective?.receipts?.some((r: MacroSnapshot,i: number) => r.hash !== a.receipts[i]?.hash))
+      fail('forecast records are inconsistent or regressive');
+  }
+}
+
 export function validateResearchSnapshot(candidate: unknown, base: MacroSnapshot, now = new Date()): MacroSnapshot {
   if (!candidate || typeof candidate !== 'object') throw new Error('Research snapshot is not an object');
   const value = candidate as MacroSnapshot;
@@ -491,6 +584,7 @@ export function validateResearchSnapshot(candidate: unknown, base: MacroSnapshot
       }
     }
   }
+  if (base.momentumTrial) validateMomentum(value, base.momentumTrial);
   if (base.prospective) {
     const archive=value.prospective;
     if (!archive || archive.protocolVersion!==base.prospective.protocolVersion || archive.chainValid!==true

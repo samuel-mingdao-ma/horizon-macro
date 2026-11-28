@@ -1,0 +1,71 @@
+.pm-view { --pm-added: #efbc81; }
+.pm-view h1 { max-width: 19ch; }
+.pm-current { display: grid; grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr); gap: clamp(1.7rem, 5vw, 5.5rem); }
+.pm-reading { display: block; margin-top: .4rem; color: var(--li-green); font: 500 clamp(3.2rem, 6vw, 5.9rem)/1 var(--font-display); letter-spacing: -.085em; font-variant-numeric: tabular-nums; }
+.pm-view .pm-change { padding-top: .45rem; font-size: .92rem; }
+.pm-change strong { margin-left: .65rem; font-variant-numeric: tabular-nums; }
+.pm-path { margin: 0; }
+.pm-path figcaption { color: var(--li-text); font-size: .92rem; }
+.pm-path-drawing { position: relative; height: clamp(85px, 11vw, 124px); margin: .6rem 0 .25rem; }
+.pm-path-drawing svg { width: 100%; height: 100%; overflow: visible; }
+.pm-path-drawing path { fill: none; vector-effect: non-scaling-stroke; }
+.pm-trace { stroke: var(--li-green); stroke-width: 2.5; stroke-linejoin: round; }
+.pm-threshold { stroke: #647261; stroke-dasharray: 4 4; stroke-width: 1; }
+.pm-threshold-label { position: absolute; right: 0; transform: translateY(-105%); background: var(--background); padding-left: .3rem; color: var(--li-muted); font-size: .78rem; }
+.pm-path-point { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--background); border: 1.8px solid var(--li-green); transform: translate(-50%, -50%); }
+.pm-path-point:last-child { background: var(--li-green); }
+.pm-path-labels { display: flex; justify-content: space-between; margin-top: .25rem; border-top: 1px solid var(--li-line); padding-top: .4rem; }
+.pm-path-labels div { display: flex; flex-direction: column; align-items: center; font-size: .81rem; font-variant-numeric: tabular-nums; }
+.pm-path-labels span { color: var(--li-muted); }
+.pm-path-labels b { font-weight: 500; font-size: .92rem; }
+.pm-states { display: flex; gap: 1.1rem; flex-wrap: wrap; margin: 1.1rem 0 0; }
+.pm-states div { display: flex; align-items: baseline; gap: .35rem; color: var(--li-muted); font-size: .85rem; }
+.pm-states dd { margin: 0; font-weight: 600; color: var(--li-ink); }
+.pm-states dd[data-active='true'] { color: var(--li-green); }
+.pm-window { display: flex; align-items: flex-end; justify-content: space-between; gap: .8rem; margin-top: 1.5rem; }
+.pm-window .li-note { margin-top: .2rem; }
+.pm-view .pm-result { margin-top: 1rem; font-size: clamp(1.12rem, 1.7vw, 1.4rem); line-height: 1.45; max-width: 52ch; }
+.pm-view .pm-result strong { color: var(--li-green); font-weight: 550; }
+.pm-view .pm-result strong:last-child { color: var(--pm-added); }
+.pm-table table { min-width: min(100%, 405px); }
+.pm-table table tbody th, .pm-case table tbody th { font-size: .89rem; }
+.pm-view .pm-verdict { border-left: 2px solid var(--pm-added); padding-left: .85rem; margin-top: 1.2rem; }
+.pm-dates { display: grid; gap: .7rem; margin: .2rem 0 1rem; }
+.pm-dates dt { color: var(--li-ink); font-weight: 550; }
+.pm-dates dd { margin: .1rem 0 0; color: var(--li-text); line-height: 1.8; font-variant-numeric: tabular-nums; }
+.pm-select { min-width: 10.5rem; }
+.pm-select select { appearance: none; padding-right: 2rem; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='m1 1 5 5 5-5' stroke='%23b8c4b5' stroke-width='1.6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right .7rem center; }
+.pm-legend { display: flex; gap: .4rem 1.1rem; flex-wrap: wrap; margin: 1.25rem 0 .8rem; font-size: .88rem; color: var(--li-text); }
+.pm-legend span { display: inline-flex; align-items: center; gap: .45rem; }
+.pm-legend i { display: inline-block; width: 11px; height: 11px; }
+.pm-legend i, .pm-strip button { border-radius: 2px; border: 1px solid #566450; background: #202821; }
+.pm-legend .active, .pm-strip .active { background: var(--li-green); color: #172019; border-color: var(--li-green); }
+.pm-legend .added, .pm-strip .added { background: var(--pm-added); color: #261e12; border-color: var(--pm-added); }
+.pm-legend .missing, .pm-strip .missing { background: repeating-linear-gradient(135deg, transparent 0 4px, #344035 4px 5px); color: var(--li-muted); }
+.pm-strip { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: clamp(2px, .45vw, 6px); }
+.pm-strip button { min-width: 0; min-height: 42px; padding: .2rem 0; color: var(--li-text); font-size: .92rem; font-weight: 600; font-variant-numeric: tabular-nums; transition: transform .12s ease; }
+.pm-strip button:hover { transform: translateY(-2px); }
+.pm-strip button[aria-pressed='true'] { outline: 2px solid var(--li-ink); outline-offset: 2px; }
+.pm-strip button:focus-visible { outline-color: var(--pm-added); }
+.pm-strip-axis { display: flex; justify-content: space-between; gap: .5rem; color: var(--li-muted); font-size: .81rem; margin-top: .5rem; }
+.pm-inspect { margin-top: 1rem; display: flex; align-items: baseline; flex-wrap: wrap; gap: .3rem 1.2rem; padding: .75rem .9rem; border-left: 2px solid var(--li-green); background: #192019; font-variant-numeric: tabular-nums; }
+.pm-inspect strong { font-family: var(--font-display); color: var(--li-ink); font-size: 1.1rem; font-weight: 550; }
+.pm-inspect span { font-size: .9rem; color: var(--li-text); }
+.pm-inspect b { font-weight: 550; color: var(--li-ink); }
+.pm-case { margin-top: 1.5rem; }
+.pm-case table { min-width: min(100%, 440px); }
+.pm-case table :is(th, td):last-child { color: var(--pm-added); }
+@media (max-width: 920px) {
+  .pm-current { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 1.2rem; }
+  .pm-states { gap: .35rem .9rem; }
+}
+@media (max-width: 650px) {
+  .pm-current { grid-template-columns: 1fr; gap: 1.2rem; }
+  .pm-window { flex-wrap: wrap; align-items: flex-start; }
+  .pm-strip { gap: 3px; }
+  .pm-strip button { min-height: 40px; }
+  .pm-view .li-scroll { margin-top: .55rem; }
+  .pm-table table :is(td, th), .pm-case table :is(td, th) { padding-inline: .35rem; }
+  .pm-table table :is(td, th):first-child, .pm-case table :is(td, th):first-child { padding-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .pm-strip button { transition: none; } .pm-strip button:hover { transform: none; } }

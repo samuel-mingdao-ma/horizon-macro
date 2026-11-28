@@ -200,6 +200,7 @@ export default function ExpansionOnset({trial}:{trial?:ExpansionTrial}) {
   return <article className="li-research on-research"><header className="li-title"><div><h1>From expansion to recession</h1>
     <p>Can building permits, the yield curve, credit and labor conditions warn of a new U.S. recession when the model learns only from expansion months?</p></div>
     <a className="li-download" href="/api/download?file=expansion"><Download size={16} aria-hidden="true"/>Monthly replay CSV</a></header>
+    <p className="on-note"><a href="#momentum">Compare the 30% alarm with a warning based on how fast risk is rising.</a></p>
     <Current trial={trial}/><Accuracy trial={trial}/><Evidence trial={trial}/>
     <section className="li-section"><h2>How the onset forecast works</h2>
       <p>The benchmark combines the published permits signal and the historical frequency of a recession month in the following year.

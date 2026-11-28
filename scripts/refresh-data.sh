@@ -9,6 +9,7 @@ python3 research/leading_receipts.py
 python3 research/weight_receipts.py
 python3 research/credit_receipts.py
 python3 research/expansion_receipts.py
+python3 research/pace_receipts.py
 python3 research/test_model.py
 python3 research/test_innovation.py
 python3 research/test_provider_fallback.py
@@ -29,4 +30,6 @@ python3 research/test_credit_diagnostics.py
 python3 research/test_credit_receipts.py
 python3 research/test_expansion_trial.py
 python3 research/test_expansion_receipts.py
+python3 research/test_pace_trial.py
+python3 research/test_pace_receipts.py
 node --test scripts/*.test.mjs
