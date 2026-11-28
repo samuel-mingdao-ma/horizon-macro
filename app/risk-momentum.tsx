@@ -206,6 +206,7 @@ export default function RiskMomentum({trial}: {trial?: MomentumTrial}) {
   return <article className="li-research pm-view"><header className="li-title"><div><h1>How fast is recession risk rising?</h1>
     <p>{recovered ? <>The three-month rule moved the first warning for the 2001 recession from <strong>{month(known.methods.level.firstAlertDate)}</strong> to <strong>{month(known.methods.quarter.firstAlertDate)}</strong>. It added alerts in {count(full.changes.quarter.quietDates.length, 'quiet month')}, including {recent.changes.quarter.quietDates.length} in the latest decade.</> : <>Can a rising probability give the expansion model more time to warn of recession without adding false alarms?</>}</p></div>
     <a className="li-download" href="/api/download?file=momentum"><Download size={16} aria-hidden="true"/>Monthly replay CSV</a></header>
+    <p className="li-note"><a href="#confirmation">Compare the economic signals behind the May 2000 and February 2019 warnings.</a></p>
     <Current trial={trial}/><Replay trial={trial}/><CaseComparison trial={trial}/><Accuracy trial={trial}/>
     <section className="li-section li-method"><h2>How the pace is measured</h2>
       <p>For each issue, the model scores four consecutive months of inputs using one set of coefficients and one expansion base rate. That holds the model fixed while the economic readings change. Earlier points in each path are reconstructed at the issue’s fit. Inputs carry the model’s two-month lag.</p>

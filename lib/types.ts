@@ -1,3 +1,4 @@
+import type { ConfirmationTrial } from './confirmation-types';
 import type { MomentumTrial } from './momentum-types';
 import type { ExpansionTrial } from './expansion-types';
 import type { CreditTrial } from './credit-types';
@@ -11,6 +12,7 @@ export type FeatureKey = 'slope'|'credit'|'labor';
 export type HistoryRow = {date:string;probability:number;baseline:number;curveProbability:number|null;target:number|null;recession:number;slope:number;credit:number;labor:number;featureDate:string};
 export type ModelMetrics = {auc:number;brier:number;logLoss:number};
 export type Snapshot = {
+ confirmationTrial?: ConfirmationTrial;
  momentumTrial?: MomentumTrial;
  expansionTrial?: ExpansionTrial;
  creditTrial?: CreditTrial;

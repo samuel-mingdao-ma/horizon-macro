@@ -214,6 +214,10 @@ test('leading-indicator refresh preserves both the current comparisons and their
         paceAvailable:false,change1m:null,change3m:null});
       c.path[3].probability = null;
     }
+    if (unavailable.confirmationTrial) {
+      Object.assign(unavailable.confirmationTrial.latest,{available:false,probability:null,change1m:null,change3m:null,
+        levelAlert:null,quarterAlert:null,pressureAlert:null,directionAlert:null,breadthAlert:null});
+    }
     assert.doesNotThrow(() => validateResearchSnapshot(unavailable, snapshot, now));
   }
   if (snapshot.leadingTrial.prospective?.receiptCount) {
@@ -309,5 +313,27 @@ test('risk momentum preserves dated risk paths, decisions and comparable quiet m
     const invalid = structuredClone(snapshot);
     mutate(invalid);
     assert.throws(() => validateResearchSnapshot(invalid,snapshot,new Date(snapshot.meta.generatedAt)), /risk momentum/i);
+  }
+});
+
+test('signal confirmation verifies votes, decisions, case attributions, cohorts and frozen records', async () => {
+  const {validateResearchSnapshot} = await import('../lib/live-data.ts');
+  const corruptions = [
+    d => { delete d.confirmationTrial; },
+    d => { d.confirmationTrial.latest.creditTightening = !d.confirmationTrial.latest.creditTightening; },
+    d => { d.confirmationTrial.history[55].pressureAlert = !d.confirmationTrial.history[55].pressureAlert; },
+    d => { d.confirmationTrial.history[55].lagFeatureDate = d.confirmationTrial.history[55].featureDate; },
+    d => { d.confirmationTrial.windows.all.changes.breadth.quietDates.push('2000-05-01'); },
+    d => { d.confirmationTrial.windows.rolling120.probabilityScores.brier += .01; },
+    d => { d.confirmationTrial.gate.pressure.passed = !d.confirmationTrial.gate.pressure.passed; },
+    ...(snapshot.confirmationTrial.caseAttribution['2000-05-01'] ? [
+      d => { d.confirmationTrial.caseAttribution['2000-05-01'].effects.slope += .01; },
+    ]: []),
+    ...(snapshot.confirmationTrial.prospective?.receiptCount ? [d => { d.confirmationTrial.prospective.receipts = []; }] : []),
+  ];
+  for (const mutate of corruptions) {
+    const invalid = structuredClone(snapshot);
+    mutate(invalid);
+    assert.throws(() => validateResearchSnapshot(invalid,snapshot,new Date(snapshot.meta.generatedAt)), /signal confirmation/i);
   }
 });

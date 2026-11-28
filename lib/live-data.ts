@@ -149,7 +149,6 @@ export async function refreshSnapshot(base: MacroSnapshot, now = new Date(), loa
   return copy;
 }
 
-/** Validate remote research before allowing it to replace a known bundled build. */
 /** Validate that a refreshed alarm experiment still evaluates the published conditional risks. */
 function validateMomentum(value: MacroSnapshot, previous: MacroSnapshot): void {
   const t = value.momentumTrial, parent = value.expansionTrial, current = t?.latest;
@@ -243,6 +242,97 @@ function validateMomentum(value: MacroSnapshot, previous: MacroSnapshot): void {
   }
 }
 
+/** Validate the confirmation votes against the same months and probabilities used by the pace replay. */
+function validateConfirmation(value: MacroSnapshot, previous: MacroSnapshot): void {
+  const trial = value.confirmationTrial, pace = value.momentumTrial, expansion = value.expansionTrial;
+  const fail = (detail: string): never => { throw new Error('Signal confirmation ' + detail); };
+  const rules = ['pressure','direction','breadth'];
+  const methods = ['level','quarter',...rules];
+  const same = (a: unknown,b: unknown) => a === b ||
+    (typeof a === 'number' && typeof b === 'number' && Math.abs(a-b) < 1e-9);
+  if (!trial?.latest || trial.spec?.id !== previous.spec.id || trial.spec.parentId !== pace?.spec?.id
+    || trial.spec.threshold !== .3 || trial.spec.featureLagMonths !== 2 || trial.spec.signalLookbackMonths !== 3
+    || !Array.isArray(trial.history) || trial.history.length !== pace.history.length) fail('is missing or misaligned');
+
+  const origins = new Map<string,MacroSnapshot>(expansion.history.map((r: MacroSnapshot) => [r.date,r]));
+  function verifyIssue(date: string, r: MacroSnapshot, p: MacroSnapshot, source: MacroSnapshot) {
+    const prior = origins.get(monthOffset(date,-3));
+    if (!['featureDate','refitDate','levelAlert','quarterAlert','probability','change1m','change3m'].every(k => same(r[k],p[k]))
+      || r.lagFeatureDate !== monthOffset(date,-5)) fail('disagrees with the parent alarm or feature dates');
+    for (const [signal,lag] of [['permitGrowth6','lagPermitGrowth6'],['claimsGrowth12','lagClaimsGrowth12'],['credit','lagCredit']]) {
+      if (!same(r[signal],source[signal]) || !same(r[lag],prior?.[signal] ?? null)) fail('uses different economic inputs');
+    }
+    const higher = (a: number | null, b: number | null) => a === null || b === null ? null : a > b;
+    const votes = {
+      permitsNegative:higher(0,r.permitGrowth6), claimsPositive:higher(r.claimsGrowth12,0),
+      creditTightening:higher(r.credit,r.lagCredit), permitsSlowing:higher(r.lagPermitGrowth6,r.permitGrowth6),
+      claimsRising:higher(r.claimsGrowth12,r.lagClaimsGrowth12),
+    };
+    const count = (v: (boolean|null)[]) => v.includes(null) ? null : v.filter(x => x).length;
+    const pressure = count([votes.permitsNegative,votes.claimsPositive,votes.creditTightening]);
+    const direction = count([votes.permitsSlowing,votes.claimsRising,votes.creditTightening]);
+    const alert = (passes: boolean) => p.levelAlert === null ? null : p.levelAlert || (p.quarterAlert && passes);
+    if (Object.entries(votes).some(([k,v]) => r[k] !== v) || r.pressureVotes !== pressure || r.directionVotes !== direction
+      || r.pressureAlert !== alert(pressure === 3) || r.directionAlert !== alert(direction === 3)
+      || r.breadthAlert !== alert(pressure !== null && pressure >= 2)) fail('votes or warning decisions disagree with inputs');
+  }
+  const current = trial.latest;
+  if (!['issueDate','forecastStart','forecastEnd','available'].every(k => current[k] === pace.latest[k]))
+    fail('has an inconsistent live issue');
+  verifyIssue(current.issueDate,current,pace.latest,expansion.latest);
+  trial.history.forEach((r: MacroSnapshot,i: number) => {
+    const p = pace.history[i];
+    if (!['date','commonMature','target','issuePhase','onsetDate'].every(k => r[k] === p[k])) fail('changed the evaluation cohort');
+    verifyIssue(r.date,r,p,expansion.history[i]);
+  });
+  for (const key of ['all','rolling120']) {
+    const w = trial.windows?.[key], reference = pace.windows[key];
+    if (!w || !['windowStart','windowEnd','n','quietExpansionN','preOnsetN','completeEpisodes'].every(k => w[k] === reference[k])
+      || !Array.isArray(w.episodes) || !['brier','auc','logLoss'].every(k => same(w.probabilityScores?.[k],reference.probabilityScores[k])))
+      fail('has inconsistent denominators or probability scores');
+    const paired: MacroSnapshot[] = trial.history.filter((r: MacroSnapshot) => r.commonMature && r.date >= w.windowStart && r.date <= w.windowEnd);
+    for (const method of methods) {
+      const added = paired.filter(r => r[method+'Alert'] && !r.levelAlert);
+      const quiet = added.filter(r => r.target === 0).map(r => r.date);
+      const pre = added.filter(r => r.target === 1).map(r => r.date);
+      if (w.summary?.[method]?.quietAlerts !== reference.summary.level.quietAlerts + quiet.length
+        || w.summary?.[method]?.preOnsetAlerts !== reference.summary.level.preOnsetAlerts + pre.length
+        || w.episodes.some((ep: MacroSnapshot) => !ep.methods?.[method])
+        || (method !== 'level' && (JSON.stringify(quiet) !== JSON.stringify(w.changes?.[method]?.quietDates)
+          || JSON.stringify(pre) !== JSON.stringify(w.changes?.[method]?.preOnsetDates)))) fail('alert counts disagree with monthly decisions');
+    }
+  }
+  const may = trial.history.find((r: MacroSnapshot) => r.date === '2000-05-01');
+  const ep = trial.windows.all.episodes.find((e: MacroSnapshot) => e.onsetDate === '2001-04-01' && e.coverage === 'full');
+  for (const rule of rules) {
+    const gate = trial.gate?.[rule];
+    const [full,recent] = [trial.windows.all,trial.windows.rolling120].map(w => w[rule+'Comparison']);
+    const kept = !!(ep && may?.commonMature && may.target === 1 && may.onsetDate === ep.onsetDate
+      && !may.levelAlert && may.quarterAlert && may[rule+'Alert'] && ep.methods[rule].leadMonths >= 11
+      && ep.methods[rule].leadMonths > (ep.methods.level.leadMonths ?? 0));
+    if (!full || !recent || !gate || gate.mayRetained !== kept || gate.allNoAddedFalse !== full.noMoreFalseAlarms
+      || gate.rolling120NoAddedFalse !== recent.noMoreFalseAlarms || gate.maintainedHitsBoth !== (full.maintainedHits && recent.maintainedHits)
+      || gate.passed !== (kept && full.sufficient && recent.sufficient && gate.maintainedHitsBoth && gate.allNoAddedFalse && gate.rolling120NoAddedFalse))
+      fail('reports an inconsistent joint test');
+  }
+  for (const date of ['2000-05-01','2019-02-01']) {
+    const parts = trial.caseAttribution?.[date], p = pace.history.find((r: MacroSnapshot) => r.date === date);
+    if (parts === null && !p?.paceAvailable) continue;
+    if (!p || !parts || !same(parts.startRisk,p.lag3Probability) || !same(parts.endRisk,p.probability)
+      || !same(parts.change,p.change3m) || !parts.effects || !same(parts.change,
+        ['slope','credit','labor','permitGrowth6'].reduce((sum,k) => sum + parts.effects[k],0))) fail('risk contributions do not reconcile');
+  }
+  const archive = trial.prospective;
+  if (archive || previous.prospective?.receiptCount) {
+    if (!archive?.chainValid || !Array.isArray(archive.receipts) || archive.receiptCount !== archive.receipts.length
+      || ![archive.pendingCount,archive.maturedCount,archive.excludedCount].every(n => Number.isInteger(n) && n >= 0)
+      || archive.receiptCount !== archive.pendingCount + archive.maturedCount + archive.excludedCount
+      || previous.prospective?.receipts?.some((r: MacroSnapshot,i: number) => r.hash !== archive.receipts[i]?.hash))
+      fail('has missing or regressive frozen records');
+  }
+}
+
+/** Validate remote research before allowing it to replace a known bundled build. */
 export function validateResearchSnapshot(candidate: unknown, base: MacroSnapshot, now = new Date()): MacroSnapshot {
   if (!candidate || typeof candidate !== 'object') throw new Error('Research snapshot is not an object');
   const value = candidate as MacroSnapshot;
@@ -585,6 +675,7 @@ export function validateResearchSnapshot(candidate: unknown, base: MacroSnapshot
     }
   }
   if (base.momentumTrial) validateMomentum(value, base.momentumTrial);
+  if (base.confirmationTrial) validateConfirmation(value, base.confirmationTrial);
   if (base.prospective) {
     const archive=value.prospective;
     if (!archive || archive.protocolVersion!==base.prospective.protocolVersion || archive.chainValid!==true

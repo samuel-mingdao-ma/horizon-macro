@@ -28,6 +28,7 @@ from credit_trial import build_credit_trial
 from credit_diagnostics import build_credit_diagnostics, build_expansion_diagnostics
 from expansion_trial import build_expansion_trial
 from pace_trial import build_pace_trial
+from confirmation_trial import build_confirmation_trial
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW = ROOT / 'research' / 'raw'
@@ -440,6 +441,8 @@ def main():
     snapshot['expansionTrial'] = expansion
     momentum = build_pace_trial(expansion, raw['USREC'])
     snapshot['momentumTrial'] = momentum
+    confirmation = build_confirmation_trial(expansion, momentum, raw['USREC'])
+    snapshot['confirmationTrial'] = confirmation
     # A compact panel with observation-month sources and issue-month lagged inputs.
     download=panel.copy()
     download.index.name='issue_date'
@@ -465,6 +468,8 @@ def main():
     pd.DataFrame(expansion['history']).to_csv(ROOT / 'public' / 'data' / 'expansion-onset.csv',
         index=False, float_format='%.12f')
     pd.DataFrame(momentum['history']).to_csv(ROOT / 'public' / 'data' / 'risk-momentum.csv',
+        index=False, float_format='%.12f')
+    pd.DataFrame(confirmation['history']).to_csv(ROOT / 'public' / 'data' / 'signal-confirmation.csv',
         index=False, float_format='%.12f')
     # Audit trail records the full fold boundary data separately for review.
     (ROOT/'research'/'folds.json').write_text(json.dumps(clean(folds),indent=2))
