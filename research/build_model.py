@@ -30,6 +30,7 @@ from expansion_trial import build_expansion_trial
 from pace_trial import build_pace_trial
 from confirmation_trial import build_confirmation_trial
 from curve_legs import build_curve_legs_trial
+from curve_stability import build_curve_stability_trial, stability_csv_rows
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW = ROOT / 'research' / 'raw'
@@ -446,6 +447,8 @@ def main():
     snapshot['confirmationTrial'] = confirmation
     legs = build_curve_legs_trial(expansion, momentum, raw)
     snapshot['curveLegsTrial'] = legs
+    stability = build_curve_stability_trial(legs)
+    snapshot['curveStabilityTrial'] = stability
     # A compact panel with observation-month sources and issue-month lagged inputs.
     download=panel.copy()
     download.index.name='issue_date'
@@ -475,6 +478,8 @@ def main():
     pd.DataFrame(confirmation['history']).to_csv(ROOT / 'public' / 'data' / 'signal-confirmation.csv',
         index=False, float_format='%.12f')
     pd.DataFrame(legs['history']).to_csv(ROOT / 'public' / 'data' / 'curve-legs.csv',
+        index=False, float_format='%.12f')
+    pd.DataFrame(stability_csv_rows(stability)).to_csv(ROOT / 'public' / 'data' / 'curve-stability.csv',
         index=False, float_format='%.12f')
     # Audit trail records the full fold boundary data separately for review.
     (ROOT/'research'/'folds.json').write_text(json.dumps(clean(folds),indent=2))

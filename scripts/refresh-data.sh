@@ -12,6 +12,7 @@ python3 research/expansion_receipts.py
 python3 research/pace_receipts.py
 python3 research/confirmation_receipts.py
 python3 research/curve_legs_receipts.py
+python3 research/curve_stability_receipts.py
 python3 research/test_model.py
 python3 research/test_innovation.py
 python3 research/test_provider_fallback.py
@@ -38,4 +39,6 @@ python3 research/test_confirmation_trial.py
 python3 research/test_confirmation_receipts.py
 python3 research/test_curve_legs.py
 python3 research/test_curve_legs_receipts.py
+python3 research/test_curve_stability.py
+python3 research/test_curve_stability_receipts.py
 node --test scripts/*.test.mjs

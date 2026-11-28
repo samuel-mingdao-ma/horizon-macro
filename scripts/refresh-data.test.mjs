@@ -222,6 +222,13 @@ test('leading-indicator refresh preserves both the current comparisons and their
       Object.assign(unavailable.curveLegsTrial.latest,{available:false,probability:null,change1m:null,change3m:null,levelAlert:null,
         quarterAlert:null,shortLeadAlert:null,bearAlert:null,sustainedAlert:null,mixedTwoToOneAlert:null});
     }
+    if (unavailable.curveStabilityTrial) {
+      const live = unavailable.curveStabilityTrial.latest;
+      Object.assign(live,{available:false,probability:null,levelAlert:null,quarterAlert:null,mixedTwoToOneAlert:null});
+      for (const result of Object.values(live.results)) {
+        Object.assign(result,{actual:null,guaranteed:null,possible:null,minus3:null,plus3:null});
+      }
+    }
     assert.doesNotThrow(() => validateResearchSnapshot(unavailable, snapshot, now));
   }
   if (snapshot.leadingTrial.prospective?.receiptCount) {
@@ -359,5 +366,24 @@ test('Treasury yield legs preserve input dates, signed changes, advance declarat
     const invalid = structuredClone(snapshot);
     mutate(invalid);
     assert.throws(() => validateResearchSnapshot(invalid,snapshot,new Date(snapshot.meta.generatedAt)), /yield curve legs/i);
+  }
+});
+
+test('curve stability preserves the grid, issue clock, stress bounds, cohort and archive', async () => {
+  const {validateResearchSnapshot} = await import('../lib/live-data.ts');
+  for (const mutate of [
+    d => { delete d.curveStabilityTrial; },
+    d => { d.curveStabilityTrial.spec.stressBp = 2; },
+    d => { d.curveStabilityTrial.cells[3] = d.curveStabilityTrial.cells[2]; },
+    d => { d.curveStabilityTrial.latest.results['d5-r2'].possible = !d.curveStabilityTrial.latest.results['d5-r2'].possible; },
+    d => { d.curveStabilityTrial.history[12].probability = -1; },
+    d => { d.curveStabilityTrial.windows.all.probabilityScores.brier += .01; },
+    d => { d.curveStabilityTrial.cells[0].windows.rolling120.possibleQuietDates.push('2000-05-01'); },
+    d => { d.curveStabilityTrial.cells[0].stressPassed = !d.curveStabilityTrial.cells[0].stressPassed; },
+    ...(snapshot.curveStabilityTrial.prospective?.receiptCount ? [d => { d.curveStabilityTrial.prospective.receipts=[]; }] : []),
+  ]) {
+    const invalid = structuredClone(snapshot);
+    mutate(invalid);
+    assert.throws(() => validateResearchSnapshot(invalid,snapshot,new Date(snapshot.meta.generatedAt)), /curve stability/i);
   }
 });

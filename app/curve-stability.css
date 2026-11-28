@@ -1,0 +1,57 @@
+.cs-view .li-title {align-items:flex-end}
+.cs-view h1 {max-width:19ch}
+.cs-view .cs-matrix-section {padding-top:1.45rem}
+.cs-view .cs-matrix {width:100%;min-width:0;table-layout:fixed;border-collapse:separate;border-spacing:.38rem;margin:.9rem 0 .1rem}
+.cs-matrix caption {text-align:left;font-size:.83rem;color:var(--li-muted);padding:.55rem 0 .4rem}
+.cs-view .cs-matrix :is(th,td) {border:0;text-align:center;padding:0}
+.cs-view .cs-matrix th {color:var(--li-text);font-weight:550;font-size:.9rem;line-height:1.35}
+.cs-view .cs-matrix th:first-child {text-align:left;width:5.3rem}
+.cs-matrix thead th {height:1.5rem}
+.cs-matrix button {width:100%;min-height:2.8rem;display:flex;align-items:center;justify-content:center;gap:.45rem;border:1px solid transparent;border-radius:.3rem;font:550 .91rem/1.1 var(--font-display);transition:filter .14s ease,border-color .14s ease}
+.cs-matrix .cs-pass {color:var(--li-green);background:color-mix(in srgb,var(--li-green) 15%,var(--surface,#111612))}
+.cs-matrix .cs-fail {color:#eac698;background:color-mix(in srgb,var(--li-permits) 12%,var(--surface,#111612))}
+.cs-matrix button[aria-pressed="true"] {outline:2px solid var(--li-ink);outline-offset:1px}
+.cs-matrix button:is(:hover,:focus-visible) {filter:brightness(1.22);border-color:currentColor}
+.cs-matrix button:focus-visible {outline:3px solid #fff;outline-offset:2px}
+.cs-view .cs-key {display:flex;gap:.35rem 1rem;flex-wrap:wrap;font-size:.82rem}
+.cs-key b,.cs-selection b {color:var(--li-ink)}
+.cs-view .cs-selection {border-top:1px solid var(--li-line);padding:1rem 0 1.5rem;display:flex;justify-content:space-between;gap:1.3rem;align-items:flex-end}
+.cs-view .cs-selection h2 {font-size:1.42rem}
+.cs-view .cs-selection p {margin-top:.35rem;font-size:.9rem}
+.cs-slider {display:flex;gap:1rem;align-items:center;max-width:52rem;padding:.85rem 0;color:var(--li-text);font-size:.94rem}
+.cs-slider input {width:100%;max-width:17rem;min-width:4rem;accent-color:var(--li-green);cursor:pointer}
+.cs-slider output {font-variant-numeric:tabular-nums;color:var(--li-green);min-width:4.3rem;text-align:right;font-weight:550}
+.cs-cases,.cs-current {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(1.4rem,4vw,4rem);margin-top:.85rem}
+.cs-case {min-width:0}
+.cs-case h3 {font-size:1.55rem}
+.cs-case p.li-note {margin-top:.32rem}
+.cs-view .cs-case .cs-edge {font-size:.88rem;line-height:1.55}
+.cs-cases dl,.cs-current dl {margin:.7rem 0;font-variant-numeric:tabular-nums}
+.cs-cases dl>div,.cs-current dl>div,.cs-dates>div {display:flex;gap:.8rem;justify-content:space-between;align-items:baseline;padding:.45rem 0;border-bottom:1px solid var(--li-line);font-size:.92rem}
+.cs-view :is(.cs-case,.cs-current,.cs-dates) dt {color:var(--li-muted)}
+.cs-view :is(.cs-case,.cs-current,.cs-dates) dd {text-align:right;color:var(--li-ink);margin:0}
+.cs-case dl .cs-shift-result {border-bottom-color:var(--li-green)}
+.cs-case .cs-shift-result dd {color:var(--li-green);font-weight:550}
+.cs-dates {margin:.85rem 0 1.75rem}
+.cs-view .cs-table table {min-width:min(100%,510px)}
+.cs-table th small {display:block;font-weight:400;font-size:.76rem;color:var(--li-muted)}
+.cs-risk {font:500 clamp(2.3rem,4vw,3.45rem)/1.08 var(--font-display);letter-spacing:-.06em;color:var(--li-green)}
+.cs-current dl {margin:0}
+.cs-view .li-section h3 {margin-top:.65rem}
+@media (max-width:720px) {
+  .cs-view .li-title,.cs-view .cs-selection {align-items:flex-start}
+  .cs-view .cs-selection {display:block}
+  .cs-cases,.cs-current {grid-template-columns:minmax(0,1fr);gap:1rem}
+  .cs-case+.cs-case {border-top:1px solid var(--li-line);padding-top:1rem}
+  .cs-slider {flex-wrap:wrap;gap:.4rem .7rem}
+  .cs-slider span {width:100%}
+  .cs-view .cs-matrix {border-spacing:.22rem}
+  .cs-view .cs-matrix th:first-child {width:3.65rem}
+  .cs-matrix button {font-size:.75rem;min-height:2.7rem;gap:.19rem}
+  .cs-matrix button svg {width:12px}
+  .cs-view .cs-matrix th {font-size:.77rem}
+  .cs-dates>div {align-items:flex-start}
+  .cs-view .cs-table :is(th,td) {font-size:.84rem;padding-inline:.4rem}
+}
+@media (max-width:400px) { .cs-matrix button {flex-direction:column;gap:.17rem} }
+@media (prefers-reduced-motion:reduce) { .cs-matrix button {transition:none} }
