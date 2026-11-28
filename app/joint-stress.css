@@ -1,0 +1,67 @@
+.js-view .li-title {align-items:flex-end}
+.js-view h1 {max-width:22ch}
+.js-settings {padding:1.1rem 0 1.3rem;border-top:1px solid var(--li-line)}
+.js-settings>div {display:flex;align-items:center;gap:1.1rem;flex-wrap:wrap}
+.js-settings>div>span,.js-case-summary span,.js-counts span {color:var(--li-text);font-size:.91rem}
+.js-settings p {font-size:.96rem;margin:.55rem 0 0}
+.js-view :is(.js-section-head,.js-case-grid) {min-width:0}
+.js-case-summary {display:flex;align-items:flex-start;justify-content:space-between;gap:2rem;margin:1rem 0 1.55rem}
+.js-case-summary p {margin:0;max-width:42rem}
+.js-case-summary>div {text-align:right;flex-shrink:0}
+.js-case-summary span,.js-case-summary strong {display:block}
+.js-case-summary span {font-size:.77rem}
+.js-case-summary strong {font:500 1.45rem/1.45 var(--font-display);color:var(--li-green);letter-spacing:-.035em}
+.js-case-grid {display:grid;grid-template-columns:minmax(0,1.12fr) minmax(16.5rem,.88fr);gap:clamp(1.4rem,4vw,3.5rem);align-items:start}
+.js-path {min-width:0;margin:0}
+.js-path figcaption,.js-view table caption {font-size:.91rem;font-weight:550;text-align:left;color:var(--li-ink);padding:0 0 .75rem}
+.js-plot {position:relative;height:clamp(145px,13vw,205px);margin:1rem .65rem 0 2.8rem}
+.js-plot svg {position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.js-plot line {fill:none}
+.js-guide {position:absolute;left:0;right:0;border-top:1px solid var(--li-line)}
+.js-guide-level {border-top:1px dashed var(--li-permits)}
+.js-guide span {position:absolute;right:calc(100% + .55rem);top:-.55em;white-space:nowrap;font:500 .73rem/1 var(--font-display);color:var(--li-muted);font-variant-numeric:tabular-nums}
+.js-guide-level span {color:var(--li-permits)}
+.js-line-observed {stroke:#bac5b9;stroke-width:1.7;stroke-dasharray:6 4}
+.js-line-scenario {stroke:var(--li-green);stroke-width:2.2}
+.js-plot>i {position:absolute;border-radius:50%;width:6px;height:6px;transform:translate(-50%,-50%);background:var(--li-green)}
+.js-axis {display:flex;justify-content:space-between;margin:.8rem 0 0 1.65rem;color:var(--li-muted);font-size:.74rem;font-variant-numeric:tabular-nums}
+.js-axis span {text-align:center;min-width:0}
+.js-key {display:flex;flex-wrap:wrap;align-items:center;gap:.28rem .85rem;margin:.85rem 0 .4rem;color:var(--li-text);font-size:.76rem}
+.js-key span {display:inline-flex;align-items:center;gap:.4rem}
+.js-key i {width:1.15rem;height:0;border-top:2px solid var(--li-green)}
+.js-key .js-observed {border-top:2px dashed #bac5b9}
+.js-key .js-threshold {border-top:1px dashed var(--li-permits)}
+.js-view .js-case-table {width:100%;min-width:0;margin:0}
+.js-view .js-case-table :is(th,td) {padding:.43rem .2rem;font-size:.83rem;text-align:right}
+.js-view .js-case-table th:first-child {text-align:left}
+.js-view .js-case-table tbody tr:last-child :is(th,td) {color:var(--li-ink);font-weight:600}
+.js-view .js-case-table tbody tr:last-child td:last-child {color:var(--li-green)}
+.js-details {margin:1.2rem 0 0;max-width:55rem}
+.js-details>summary {cursor:pointer;color:var(--li-green);font-size:.88rem;padding:.35rem 0;width:fit-content}
+.js-details>summary:hover,.js-links a:hover {text-decoration:underline;text-underline-offset:.23rem}
+.js-details table {min-width:360px}
+.js-view .js-table table {min-width:510px}
+.js-view .js-table caption {padding-bottom:.65rem}
+.js-table th small {display:block;color:var(--li-muted);font-size:.76rem;font-weight:400;margin:.15em 0}
+.js-table :is(td,th) {font-variant-numeric:tabular-nums}
+.js-counts {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:1.4rem 0;gap:.9rem}
+.js-counts>div {border-left:1px solid var(--li-line);padding-left:1rem;min-width:0}
+.js-counts>div:first-child {border:0;padding:0}
+.js-counts :is(strong,span,small) {display:block}
+.js-counts strong {font:500 clamp(1.55rem,3vw,2.65rem)/1.3 var(--font-display);letter-spacing:-.05em;margin-block:.25rem;font-variant-numeric:tabular-nums}
+.js-counts>div:last-child strong {color:var(--li-green)}
+.js-counts small {color:var(--li-muted);font-size:.79rem}
+.js-view .js-links {display:flex;gap:.6rem 1.3rem;flex-wrap:wrap;margin-top:1rem}
+.js-view .js-links a {color:var(--li-green);font-size:.88rem}
+.js-view .js-coherent {border-top:1px solid var(--li-line);padding-top:1.3rem;margin-top:1.35rem}
+.js-coherent h3 {font-size:1.18rem}
+@media(max-width:1050px){.js-case-grid{grid-template-columns:minmax(0,1fr) minmax(15rem,1fr);gap:1.5rem}}
+@media(max-width:720px){.js-case-grid {grid-template-columns:minmax(0,1fr);gap:1.4rem}.js-plot {height:145px}
+.js-case-summary {gap:.65rem;flex-direction:column}.js-case-summary>div {display:flex;gap:.6rem;align-items:baseline;text-align:left}
+.js-case-summary strong {font-size:1rem}.js-counts {gap:.45rem}.js-counts>div {padding-left:.55rem}
+.js-counts span,.js-counts small {font-size:.75rem;line-height:1.4}.js-view .js-case-table :is(th,td) {font-size:.85rem}
+.js-view .li-controls button {min-height:36px}.js-view .li-title {align-items:flex-start}}
+.js-whisker {pointer-events:none;position:absolute;right:0;border-right:3px solid var(--li-green);opacity:.62}
+.js-whisker::before,.js-whisker::after {content:'';position:absolute;background:var(--li-green);height:2px;width:10px;right:-6px}
+.js-whisker::before {top:0}.js-whisker::after {bottom:0}
+.js-key .js-possible {width:0;height:.7rem;border:0;border-right:3px solid var(--li-green);opacity:.7}

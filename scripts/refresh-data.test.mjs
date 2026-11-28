@@ -229,6 +229,14 @@ test('leading-indicator refresh preserves both the current comparisons and their
         Object.assign(result,{actual:null,guaranteed:null,possible:null,minus3:null,plus3:null});
       }
     }
+    if (unavailable.jointStressTrial) {
+      const live = unavailable.jointStressTrial.latest;
+      Object.assign(live,{available:false,probability:null,change1m:null,change3m:null,levelAlert:null,referenceAlert:null});
+      for (const r of Object.values(live.radii)) {
+        for (const k of ['probability','change1m','change3m','level','alert','extra']) r[k] = [null,null];
+        for (const k of Object.keys(r.witnesses)) r.witnesses[k] = null;
+      }
+    }
     assert.doesNotThrow(() => validateResearchSnapshot(unavailable, snapshot, now));
   }
   if (snapshot.leadingTrial.prospective?.receiptCount) {
@@ -385,5 +393,22 @@ test('curve stability preserves the grid, issue clock, stress bounds, cohort and
     const invalid = structuredClone(snapshot);
     mutate(invalid);
     assert.throws(() => validateResearchSnapshot(invalid,snapshot,new Date(snapshot.meta.generatedAt)), /curve stability/i);
+  }
+});
+
+test('joint Treasury stress retains its scores, same-path comparisons and dated examples', async () => {
+  const {validateResearchSnapshot} = await import('../lib/live-data.ts');
+  const now = new Date(snapshot.meta.generatedAt);
+  for (const change of [
+    d => { delete d.jointStressTrial; },
+    d => { d.jointStressTrial.history[25].radii['5'].probability[1] += .003; },
+    d => { d.jointStressTrial.windows.all.radii['3'].coherentBrier.reverse(); },
+    d => { d.jointStressTrial.windows.rolling120.radii['5'].extraQuiet[1]++; },
+    d => { d.jointStressTrial.cases['2019-02-01'].radii['3'].witnesses.extra.path[3] += .01; },
+    d => { d.jointStressTrial.calendarPaths.february2019.windows.all.alertQuiet++; },
+  ]) {
+    const invalid = structuredClone(snapshot);
+    change(invalid);
+    assert.throws(() => validateResearchSnapshot(invalid,snapshot,now), /joint yield stress/i);
   }
 });

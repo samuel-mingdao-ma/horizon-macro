@@ -1,3 +1,4 @@
+import type { JointStressTrial } from './joint-stress-types';
 import type { CurveStabilityTrial } from './curve-stability-types';
 import type { CurveLegsTrial } from './curve-legs-types';
 import type { ConfirmationTrial } from './confirmation-types';
@@ -14,6 +15,7 @@ export type FeatureKey = 'slope'|'credit'|'labor';
 export type HistoryRow = {date:string;probability:number;baseline:number;curveProbability:number|null;target:number|null;recession:number;slope:number;credit:number;labor:number;featureDate:string};
 export type ModelMetrics = {auc:number;brier:number;logLoss:number};
 export type Snapshot = {
+ jointStressTrial?: JointStressTrial;
  curveStabilityTrial?: CurveStabilityTrial;
  curveLegsTrial?: CurveLegsTrial;
  confirmationTrial?: ConfirmationTrial;

@@ -161,6 +161,7 @@ export default function CurveStability({trial}:{trial?:CurveStabilityTrial}) {
       ? <>At {ref.ratio}:1, a +{trial.spec.stressBp} bp change to the ten-year reading {original.cases[may]?.plus3===false ? 'silences the original May 2000 warning' : 'tests the original May 2000 warning'}. With a {band(ref.bandBp)} flat band, the early warning survives every shift and adds no false-alert months in either sample under the same stress.</>
       : <>Test the May 2000 warning across small changes in the ten-year yield and neighboring bill-to-bond ratios.</>}</p></div>
     <a className="li-download" href="/api/download?file=stability"><Download size={16} aria-hidden/>Monthly grid CSV</a></header>
+    <p className="li-note">This test holds the risk estimate fixed. <a href="#jointstress">Recalculate risk and momentum when both Treasury yields move.</a></p>
     <Matrix trial={trial} cell={cell} select={setSelected} stressed={stressed} setStressed={setStressed}/>
     <section className="cs-selection" aria-live="polite"><div><h2>{band(cell.bandBp)} flat band · {cell.ratio}:1</h2>
       <p>May 2000 at observed yields <b>{flag(cell.cases[may]?.actual)}</b>. At a +{trial.spec.stressBp} bp shift <b>{flag(cell.cases[may]?.plus3)}</b>.</p></div>

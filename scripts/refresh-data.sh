@@ -40,5 +40,6 @@ python3 research/test_confirmation_receipts.py
 python3 research/test_curve_legs.py
 python3 research/test_curve_legs_receipts.py
 python3 research/test_curve_stability.py
+python3 research/test_joint_stress.py
 python3 research/test_curve_stability_receipts.py
 node --test scripts/*.test.mjs

@@ -1,3 +1,4 @@
+import { validateJointStress } from './joint-stress-validation.ts';
 import { validateCurveStability } from './curve-stability-validation.ts';
 /** Live public-data inference. Fitting and validation stay in research/build_model.py. */
 export type Observation = { date: string; value: number };
@@ -752,6 +753,7 @@ export function validateResearchSnapshot(candidate: unknown, base: MacroSnapshot
   if (base.confirmationTrial) validateConfirmation(value, base.confirmationTrial);
   if (base.curveLegsTrial) validateCurveLegs(value, base.curveLegsTrial);
   if (base.curveStabilityTrial) validateCurveStability(value.curveStabilityTrial,value.curveLegsTrial,base.curveStabilityTrial);
+  if (base.jointStressTrial) validateJointStress(value.jointStressTrial, value.expansionTrial, value.momentumTrial, value.curveStabilityTrial, base.jointStressTrial);
   if (base.prospective) {
     const archive=value.prospective;
     if (!archive || archive.protocolVersion!==base.prospective.protocolVersion || archive.chainValid!==true
